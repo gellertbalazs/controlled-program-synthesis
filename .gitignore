@@ -1,0 +1,8 @@
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Local primary sources. Keep these on disk for local work, but do not publish
+# them until repository visibility and redistribution rights are explicit.
+/references/*
+!/references/README.md
