@@ -1,6 +1,58 @@
-.DS_Store
-.AppleDouble
-.LSOverride
+# Default deny: local control-plane and generated files stay local.
+*
 
+# Permit traversal so explicit file exceptions can match.
+!*/
+
+# Published repository-policy exception.
+!/.gitignore
+
+# Published product documentation.
+!/README.md
+!/**/README.md
+
+# Published SWI-Prolog product and test source.
+!/src/**/*.pl
+!/tests/**/*.pl
+
+# Re-ignore local Codex/control-plane trees, including their READMEs.
+/.codex/
+/.agents/
+/.vscode/
+/.github/
 /bootstrap/
-/references/
+/config/
+/tasks/
+/scripts/
+/prompts/
+/workflows/
+/docs/plans/
+
+# Root and nested operational documents remain local.
+/AGENTS.md
+/PLANS.md
+/ROBOT.md
+/CONTRIBUTING.md
+/ROADMAP.md
+/STATUS.md
+/DECISIONS_NEEDED.md
+/**/AGENTS.md
+
+# Primary evidence stays local; only its descriptive README may be published.
+/references/*
+!/references/README.md
+
+# Generated reports, caches, logs, coverage, and benchmark results stay local.
+**/.DS_Store
+**/.AppleDouble
+**/.LSOverride
+**/__pycache__/
+**/*.pyc
+**/*.log
+/coverage/
+/reports/
+/results/
+/tmp/
+/benchmarks/results/
+/benchmarks/**/*.json
+/benchmarks/**/*.csv
