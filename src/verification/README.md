@@ -1,4 +1,4 @@
-# Verification Module
+# Verification
 
-Intended owner of semantic validation, proof replay, certificate checking, and
-declared finite exhaustive checks. Unimplemented.
+Reserved for independent checking of proof records and Program ASTs. Phase 0
+contains no verifier.

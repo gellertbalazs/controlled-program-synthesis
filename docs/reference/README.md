@@ -1,10 +1,15 @@
-# Source Evidence
+# Reference orientation
 
-The project begins from five immutable local artifacts: one natural-language
-and Prolog analysis, two legacy Prolog programs, and two Elements of Programming
-references. They are evidence for later audited design work, not production
-dependencies and not code loaded by the Phase 0 product.
+Five immutable local inputs have distinct roles:
 
-The descriptive inventory is in [the repository reference directory](../../references/README.md).
-Detailed working citations and integrity records are intentionally kept outside
-the published product plane.
+- an NLP/Prolog text provides historical grammar and logical-form context;
+- two legacy Prolog files provide line-addressable implementation evidence but
+  are never consulted or executed as product modules;
+- the *Elements of Programming* text provides the conceptual treatment of
+  operations, laws, preconditions, postconditions, and complexity;
+- its compact concept reference supports orientation, not independent
+  authority for unsupported claims.
+
+Phase 0 records identity, provenance, roles, and concise risks. It does not
+normalize, port, or exhaustively catalogue the inputs. Current technology
+sources are evaluated separately from the immutable local evidence.

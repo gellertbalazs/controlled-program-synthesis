@@ -1,18 +1,17 @@
-:- begin_tests(cps_bootstrap_process).
+:- begin_tests(bootstrap_process).
 
 :- use_module(library(process)).
-:- use_module(library(readutil)).
 :- use_module(library(time)).
 
-project_root(Root) :-
-    source_file(project_root(_), ThisFile),
-    file_directory_name(ThisFile, IntegrationDirectory),
+repository_root(Root) :-
+    source_file(repository_root(_), File),
+    file_directory_name(File, IntegrationDirectory),
     file_directory_name(IntegrationDirectory, TestsDirectory),
     file_directory_name(TestsDirectory, Root).
 
-cleanup_child(Pid, Out, Err) :-
+cleanup_child(Pid, Out, Error) :-
     catch(close(Out), _, true),
-    catch(close(Err), _, true),
+    catch(close(Error), _, true),
     (   catch(process_wait(Pid, Status, [timeout(0)]), _, Status = gone),
         Status == timeout
     ->  stop_timed_out_child(Pid)
@@ -30,95 +29,63 @@ stop_timed_out_child(Pid) :-
 
 bounded_process_wait(Pid, Limit, Status) :-
     catch(
-        call_with_time_limit(Limit, process_wait(Pid, Status0)),
+        call_with_time_limit(Limit, process_wait(Pid, Observed)),
         time_limit_exceeded,
-        Status0 = timeout),
-    Status = Status0.
+        Observed = timeout
+    ),
+    Status = Observed.
 
-wait_for_child(Pid, Limit, Status) :-
-    bounded_process_wait(Pid, Limit, InitialStatus),
-    (   InitialStatus == timeout
-    ->  stop_timed_out_child(Pid),
-        Status = timeout
-    ;   Status = InitialStatus
-    ).
+run_goal(Goal, Output, Status) :-
+    run_goal(Goal, 5, Output, Status).
 
-read_child_output(Out, Err, StandardOutput, StandardError) :-
-    call_with_time_limit(
-        2,
-        ( read_string(Out, _, StandardOutput),
-          read_string(Err, _, StandardError)
-        )).
-
-run_child(Arguments, Limit, Status, StandardOutput, StandardError) :-
-    project_root(Root),
+run_goal(Goal, Limit, Output, Status) :-
+    repository_root(Root),
     setup_call_cleanup(
         process_create(
             path(swipl),
-            Arguments,
+            ['-f', none, '-q', '-g', Goal, '-t', 'halt(1)'],
             [ cwd(Root),
               stdout(pipe(Out)),
-              stderr(pipe(Err)),
+              stderr(pipe(Error)),
               process(Pid)
-            ]),
-        ( wait_for_child(Pid, Limit, Status),
-          (   Status == timeout
-          ->  StandardOutput = "",
-              StandardError = ""
-          ;   read_child_output(
-                  Out, Err, StandardOutput, StandardError)
-          )
+            ]
         ),
-        cleanup_child(Pid, Out, Err)).
+        ( wait_bounded(Pid, Limit, Status),
+          read_string(Out, _, Output),
+          read_string(Error, _, ErrorOutput),
+          assertion(ErrorOutput == "")
+        ),
+        cleanup_child(Pid, Out, Error)
+    ).
 
-test(clean_process_reports_canonical_stage) :-
-    Goal = 'cps_bootstrap:bootstrap_stage(Stage),write_canonical(Stage),nl',
-    run_child(
-        [ '-f', none,
-          '-q',
-          '-s', 'src/cps_bootstrap.pl',
-          '-g', Goal,
-          '-t', halt
-        ],
-        10,
-        Status,
-        StandardOutput,
-        StandardError),
-    assertion(Status == exit(0)),
-    assertion(StandardOutput ==
-              "cps_stage{phase:0,status:infrastructure_only}\n"),
-    assertion(StandardError == "").
+wait_bounded(Pid, Limit, Status) :-
+    bounded_process_wait(Pid, Limit, Observed),
+    (   Observed == timeout
+    ->  stop_timed_out_child(Pid),
+        Status = timeout
+    ;   Status = Observed
+    ).
 
-test(clean_process_propagates_failed_stage_query) :-
-    Goal = '(cps_bootstrap:bootstrap_stage(cps_stage{phase:1,status:infrastructure_only})->halt(0);halt(7))',
-    run_child(
-        [ '-f', none,
-          '-q',
-          '-s', 'src/cps_bootstrap.pl',
-          '-g', Goal
-        ],
-        10,
-        Status,
-        StandardOutput,
-        StandardError),
-    assertion(Status == exit(7)),
-    assertion(StandardOutput == ""),
-    assertion(StandardError == "").
+test(fresh_process_reports_phase0) :-
+    run_goal(
+        "use_module('src/cps_bootstrap.pl'),cps_bootstrap:bootstrap_stage(Stage),format('~w~n',[Stage]),halt",
+        "phase0\n",
+        exit(0)
+    ).
 
-test(silent_child_is_terminated_at_timeout) :-
-    Goal = 'sleep(5)',
-    run_child(
-        [ '-f', none,
-          '-q',
-          '-g', Goal,
-          '-t', halt
-        ],
+test(fresh_process_propagates_rejection) :-
+    run_goal(
+        "use_module('src/cps_bootstrap.pl'),cps_bootstrap:bootstrap_stage(phase1)",
+        "",
+        exit(1)
+    ).
+
+test(silent_process_is_terminated_at_timeout) :-
+    run_goal(
+        "sleep(5)",
         0.2,
-        Status,
-        StandardOutput,
-        StandardError),
-    assertion(Status == timeout),
-    assertion(StandardOutput == ""),
-    assertion(StandardError == "").
+        "",
+        timeout
+    ).
 
-:- end_tests(cps_bootstrap_process).
+:- end_tests(bootstrap_process).

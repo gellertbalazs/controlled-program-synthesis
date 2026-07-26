@@ -1,18 +1,16 @@
 # Controlled Program Synthesis
 
-This repository is a bootstrap-only SWI-Prolog project for a proof-oriented
+This is a bootstrap-only SWI-Prolog project for a proof-oriented
 controlled-English program synthesizer. It does not yet contain a grammar,
 semantic parser, knowledge kernel, prover, synthesizer, verifier, renderer, or
 teaching engine.
 
-## Goal
+## Intended product
 
 The intended product will translate a strictly controlled subset of English
 into deterministic pseudocode through typed intermediate representations,
-explicit proof obligations, independent verification, and a renderer that adds
-no algorithmic content.
-
-The intended pipeline is:
+explicit proof obligations, independent verification, and a renderer that
+adds no algorithmic content.
 
 ```text
 controlled English -> complete parses -> typed Specification IR
@@ -20,55 +18,46 @@ controlled English -> complete parses -> typed Specification IR
 -> deterministic pseudocode
 ```
 
-Runtime use of an LLM or network service is not part of the product baseline.
-Optional solvers or proof assistants are proposal or checking backends only
-after separate qualification and approval.
+Optional solvers, proof assistants, and AI systems are untrusted proposal
+sources unless a later task qualifies their exact versions, representations,
+resource bounds, and independently checked evidence.
 
-## Safety Boundary
+## Safety boundary
 
-Final pseudocode may be emitted only when every premise is active and trusted,
-every required obligation has an accepted proof or certificate, the Program
-AST passes independent verification, and rendering adds no algorithmic
-content. Otherwise the system must return an explicit status such as
-`UNKNOWN`, `AMBIGUOUS`, `CONTRADICTION`, `RESOURCE_LIMIT`, or
-`UNSUPPORTED_INPUT`.
+Final output may eventually be emitted only when every used premise is active
+and trusted, every obligation is accepted, the Program AST passes independent
+verification, and rendering adds no semantic content. Missing or insufficient
+evidence must produce an explicit status such as `UNKNOWN`, `AMBIGUOUS`,
+`RESOURCE_LIMIT`, or `UNSUPPORTED_INPUT`.
 
-Missing knowledge is not falsity. User-derived data must never become an
-arbitrary Prolog goal, clause, or database mutation.
+User or knowledge data must never become an arbitrary Prolog goal, clause, or
+database mutation. The project makes no claim of absolute hallucination
+freedom; its intended guarantee is relative to its explicit source fragment,
+premises, rules, and trusted checkers.
 
-## Current Verified Product State
+## Current verified product state
 
 Phase 0 exposes one non-domain predicate,
-`cps_bootstrap:bootstrap_stage/1`, which reports that the repository contains
-infrastructure only. No synthesis claim is made.
-
-From a clean clone with SWI-Prolog installed, the tracked smoke module can be
-queried with:
+`cps_bootstrap:bootstrap_stage/1`, which deterministically reports `phase0`.
+No synthesis claim is made.
 
 ```sh
 swipl -f none -q -s src/cps_bootstrap.pl -g "cps_bootstrap:bootstrap_stage(S),write_canonical(S),nl,halt"
 ```
 
-The full local quality gate is intentionally not published as product source.
-
-## Source Roles
-
-The local evidence set contains an NLP/Prolog reference, two educational
-legacy Prolog artifacts, the contextual *Elements of Programming* text, and a
-compact EoP concept reference. The originals are immutable local evidence and
-are not production modules. See [references](references/README.md).
+Five research inputs inform future work: one NLP/Prolog text, two legacy
+Prolog artifacts treated only as inert evidence, and two *Elements of
+Programming* references. They are not production modules or published source.
 
 ## Navigation
 
 - [Product architecture](docs/architecture/README.md)
-- [Safety and decisions](docs/decisions/README.md)
+- [Safety and decision policy](docs/decisions/README.md)
 - [Evaluation boundary](docs/evaluation/README.md)
 - [Reference roles](docs/reference/README.md)
 - [Knowledge areas](knowledge/README.md)
 - [Source layout](src/README.md)
 - [Test layout](tests/README.md)
 - [Future benchmark corpus](benchmarks/README.md)
-
-## License
 
 No license or copyright grant has been added.

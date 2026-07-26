@@ -1,5 +1,3 @@
-# Axioms and Laws
+# Axioms
 
-Reserved for explicitly scoped properties with variables, domains,
-definedness conditions, evidence, and trust policy. A declaration alone will
-not constitute proof. No axiom or law is active in Phase 0.
+Reserved for explicit law statements with definedness and provenance.

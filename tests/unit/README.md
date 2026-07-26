@@ -1,4 +1,5 @@
-# Unit Tests
+# Unit tests
 
-Focused predicate and representation-contract tests. Phase 0 covers the
-bootstrap-stage contract only.
+Focused tests cover the bootstrap predicate and repository-boundary contracts,
+including success, rejection, boundary, malformed-input, and path-handling
+cases.

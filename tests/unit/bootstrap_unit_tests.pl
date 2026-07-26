@@ -2,21 +2,18 @@
 
 :- use_module('../../src/cps_bootstrap').
 
-test(stage_is_exact) :-
-    bootstrap_stage(cps_stage{phase:0, status:infrastructure_only}).
-
-test(stage_is_ground) :-
+test(stage_query_reports_phase0) :-
     bootstrap_stage(Stage),
-    ground(Stage).
+    assertion(Stage == phase0).
 
-test(stage_is_deterministic) :-
+test(future_stage_is_rejected, [fail]) :-
+    bootstrap_stage(phase1).
+
+test(stage_query_has_one_solution) :-
     findall(Stage, bootstrap_stage(Stage), Stages),
-    assertion(Stages == [cps_stage{phase:0, status:infrastructure_only}]).
+    assertion(Stages == [phase0]).
 
-test(stage_rejects_other_phase, [fail]) :-
-    bootstrap_stage(cps_stage{phase:1, status:infrastructure_only}).
-
-test(stage_rejects_malformed_term, [fail]) :-
-    bootstrap_stage(not_a_stage_dict).
+test(malformed_stage_is_rejected, [fail]) :-
+    bootstrap_stage(stage(phase0)).
 
 :- end_tests(cps_bootstrap).

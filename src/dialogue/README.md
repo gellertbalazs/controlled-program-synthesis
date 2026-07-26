@@ -1,4 +1,4 @@
-# Dialogue and Teaching Module
+# Dialogue
 
-Intended owner of clarification, candidate teaching, quarantine, review,
-activation, versioning, contradiction handling, and retraction. Unimplemented.
+Reserved for a future teaching lifecycle with quarantine and explicit
+activation. Phase 0 contains no dialogue system.

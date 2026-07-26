@@ -1,6 +1,5 @@
-# Integration Tests
+# Integration tests
 
-Clean-process and public-boundary tests. Phase 0 loads the bootstrap module from
-its repository-relative path and verifies canonical output and failure
-propagation, and proves that a silent child is terminated at the declared
-timeout.
+Clean child SWI-Prolog processes load the bootstrap module through its public
+repository-relative path and verify both successful output and rejection
+status propagation under a fixed timeout.

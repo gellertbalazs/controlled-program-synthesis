@@ -15,7 +15,7 @@
 !/src/**/*.pl
 !/tests/**/*.pl
 
-# Re-ignore local Codex/control-plane trees, including their READMEs.
+# The Codex/control plane is never published, including its README files.
 /.codex/
 /.agents/
 /.vscode/
@@ -28,7 +28,7 @@
 /workflows/
 /docs/plans/
 
-# Root and nested operational documents remain local.
+# Root operational documents are local even if renamed later.
 /AGENTS.md
 /PLANS.md
 /ROBOT.md
@@ -36,23 +36,17 @@
 /ROADMAP.md
 /STATUS.md
 /DECISIONS_NEEDED.md
-/**/AGENTS.md
 
 # Primary evidence stays local; only its descriptive README may be published.
 /references/*
 !/references/README.md
 
-# Generated reports, caches, logs, coverage, and benchmark results stay local.
-**/.DS_Store
-**/.AppleDouble
-**/.LSOverride
-**/__pycache__/
-**/*.pyc
-**/*.log
+# Generated and machine-local outputs never enter the product plane.
+/artifacts/
 /coverage/
-/reports/
+/generated/
 /results/
-/tmp/
-/benchmarks/results/
-/benchmarks/**/*.json
-/benchmarks/**/*.csv
+/.cache/
+**/__pycache__/
+*.log
+*.pyc

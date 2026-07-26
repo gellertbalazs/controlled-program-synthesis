@@ -1,6 +1,7 @@
 :- module(cps_bootstrap, [bootstrap_stage/1]).
 
-%!  bootstrap_stage(-Stage:dict) is det.
+%!  bootstrap_stage(?Stage) is semidet.
 %
-%   Report the only product capability implemented during Phase 0.
-bootstrap_stage(cps_stage{phase:0, status:infrastructure_only}).
+%   Succeed exactly for the only implemented product stage.
+
+bootstrap_stage(phase0).

@@ -1,4 +1,4 @@
-# Controlled-Language Module
+# Controlled language
 
-Intended owner of bounded grammar parsing, full-input consumption, ambiguity
-reporting, and controlled text-to-Specification-IR conversion. Unimplemented.
+Reserved for a future, approved controlled-language slice. No grammar or
+semantic parser is implemented in Phase 0.

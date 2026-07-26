@@ -1,22 +1,27 @@
 # Architecture
 
-The intended architecture separates controlled input, ground internal
-representations, untrusted proposal mechanisms, and a small trusted acceptance
-path. Phase 0 implements only the bootstrap-stage marker; the remaining material
-describes the planned product boundary.
+Only the Phase 0 stage query exists. The intended architecture is:
 
-Stable safety rules:
+```text
+controlled English
+  -> complete parse forest
+  -> canonical ground typed Specification IR
+  -> bounded proposal and search
+  -> Program AST plus proof record
+  -> independent deterministic acceptance
+  -> content-free deterministic rendering
+```
 
-- user text never becomes an arbitrary Prolog goal;
-- final code is rendered from a checked ground Program AST;
-- unsupported, undefined, incomplete, timed-out, or exhausted work is not
-  silently accepted;
-- external tools and language models may propose evidence but are not proof
-  authorities by default;
-- immutable sources remain evidence, not runtime dependencies.
+Specification IR records the requested behavior. A proof record records why a
+candidate follows. The Program AST is the accepted, language-neutral program;
+rendered text is only its deterministic projection.
 
-The intended pipeline is controlled text to a ground typed Specification IR,
-untrusted candidate search, independent bounded checking, a checked ground
-Program AST, and deterministic rendering. The product trust boundary and
-detailed working design remain proposals until later tasks implement and
-verify them.
+Development, proposal/search, and trusted acceptance are separate planes.
+Proposal components may return candidates but cannot authorize output. Every
+process boundary requires a versioned representation, finite resource bounds,
+and explicit failure statuses. The future trusted computing base is limited to
+the parsers and deterministic checkers required to validate premises, proof
+obligations, the final Program AST, and rendering.
+
+No grammar, proof kernel, knowledge engine, synthesizer, verifier, renderer,
+or teaching lifecycle is implemented yet.

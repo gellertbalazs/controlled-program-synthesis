@@ -1,4 +1,4 @@
-# Rendering Module
+# Rendering
 
-Intended owner of deterministic projection from an accepted ground Program AST
-to text. It may not infer, repair, or execute generated code. Unimplemented.
+Reserved for deterministic, content-free rendering of accepted Program ASTs.
+Phase 0 contains no renderer.

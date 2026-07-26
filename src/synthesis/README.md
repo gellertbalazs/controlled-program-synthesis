@@ -1,4 +1,4 @@
-# Synthesis Module
+# Synthesis
 
-Intended owner of replaceable, resource-bounded candidate generators. Its
-backends are untrusted and cannot authorize output. Unimplemented.
+Reserved for proposal generation behind independent acceptance. Phase 0
+contains no synthesizer.

@@ -1,5 +1,4 @@
-# Inference Module
+# Inference
 
-Intended owner of bounded derivations with explicit proved, refuted,
-counterexample, unknown, unsupported, and resource-exhausted outcomes.
-Unimplemented.
+Reserved for bounded, explicit-outcome inference after its proof boundary is
+approved. Phase 0 contains no inference engine.

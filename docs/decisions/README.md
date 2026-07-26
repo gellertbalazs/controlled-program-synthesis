@@ -1,9 +1,10 @@
-# Architecture Decisions
+# Decision policy
 
-Phase 0 records eight proposed decisions. None is accepted merely by appearing
-here; each still requires the evidence and human approval named in its record.
-Published product behavior remains the bootstrap marker only.
+Architectural choices remain proposals until a bounded task supplies evidence,
+tests, proof obligations, and explicit owner approval. Phase 0 adopts no
+solver, proof assistant, certificate format, synthesis portfolio, or AI
+backend.
 
-The proposals cover source authority, typed representations, computational
-patterns, immutable evidence, native DCGs, hybrid synthesis, external
-certificate trust, and an isolated AI proposal plane.
+Later decisions must keep development, untrusted proposal/search, and trusted
+acceptance separate. A tool being installed or producing a successful exit
+code is not evidence that it is sound, supported, or adopted.

@@ -1,4 +1,3 @@
-# Knowledge Runtime Module
+# Knowledge
 
-Intended owner of versioned knowledge lookup, provenance, contradiction state,
-and activation/trust-policy enforcement. Unimplemented.
+Reserved for validated knowledge schemas and trusted premise activation.
