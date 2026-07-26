@@ -2,7 +2,6 @@
 
 :- use_module(library(filesex)).
 :- use_module(library(process)).
-:- use_module('../../scripts/cps_checks').
 
 repository_root(Root) :-
     source_file(repository_root(_), File),
@@ -37,6 +36,27 @@ fixture_path(Relative, Absolute) :-
     ),
     repository_root(Root),
     directory_file_path(Root, Relative, Absolute).
+
+discover_prolog_files(Directory, Files) :-
+    findall(Path,
+            ( repository_file(Directory, Path),
+              file_name_extension(_, pl, Path)
+            ),
+            Unsorted),
+    sort(Unsorted, Files).
+
+repository_file(Directory, Path) :-
+    directory_files(Directory, Names),
+    member(Name, Names),
+    Name \== '.',
+    Name \== '..',
+    directory_file_path(Directory, Name, Candidate),
+    (   exists_directory(Candidate)
+    ->  repository_file(Candidate, Path)
+    ;   exists_file(Candidate),
+        absolute_file_name(Candidate, Path,
+                           [file_type(regular), access(read)])
+    ).
 
 create_source_fixture(Relative-Absolute) :-
     fixture_path(Relative, Absolute),
