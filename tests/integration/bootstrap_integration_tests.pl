@@ -88,4 +88,25 @@ test(silent_process_is_terminated_at_timeout) :-
         timeout
     ).
 
+test(fresh_process_unicode_success) :-
+    run_goal(
+        "use_module('src/cps_reference_normalization.pl'),Input=evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,'ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f'),lines(49,49),raw_utf8([73,116,8217,115])),claim(source_fact,encoding,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_code_points),established(preserve_unicode)))),normalize_reference_evidence(Input,Result),write_canonical(Result),nl,halt",
+        "normalization(accepted,normalized(evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f),lines(49,49),raw_utf8([73,116,8217,115])),claim(source_fact,encoding,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_code_points),established(preserve_unicode))))))\n",
+        exit(0)
+    ).
+
+test(fresh_process_forbidden_meta_status) :-
+    run_goal(
+        "use_module('src/cps_reference_normalization.pl'),Input=evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,'ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f'),lines(207,207),raw_utf8([99,97,108,108])),claim(source_fact,host_goal_execution,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_legacy_line),established(reject_host_execution)))),normalize_reference_evidence(Input,Result),write_canonical(Result),nl,halt",
+        "normalization(rejected(host_goal_execution),normalized(evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f),lines(207,207),raw_utf8([99,97,108,108])),claim(source_fact,host_goal_execution,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_legacy_line),established(reject_host_execution))))))\n",
+        exit(0)
+    ).
+
+test(fresh_process_working_directory_independence) :-
+    RootGoal = "use_module('src/cps_reference_normalization.pl'),Input=evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,'ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f'),lines(49,49),raw_utf8([73,116,8217,115])),claim(source_fact,encoding,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_code_points),established(preserve_unicode)))),normalize_reference_evidence(Input,Result),write_canonical(Result),nl,halt",
+    OtherGoal = "use_module('src/cps_reference_normalization.pl'),working_directory(_,'/tmp'),Input=evidence(at(source('dcg_compiler.pl','references/dcg_compiler.pl',6743,'ce0851db9749c748b4bf194af539da5cf53174c1a2873b07b2a60aa883b11c2f'),lines(49,49),raw_utf8([73,116,8217,115])),claim(source_fact,encoding,facets(not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,established(exact_code_points),established(preserve_unicode)))),normalize_reference_evidence(Input,Result),write_canonical(Result),nl,halt",
+    run_goal(RootGoal, RootOutput, exit(0)),
+    run_goal(OtherGoal, OtherOutput, exit(0)),
+    assertion(OtherOutput == RootOutput).
+
 :- end_tests(bootstrap_process).
