@@ -235,6 +235,10 @@ span_edges(
                          not_applicable, not_applicable, not_applicable,
                          not_applicable)).
 
+assert_non_ground_rejected(Input) :-
+    normalize_reference_evidence(Input, Result),
+    assertion(Result == normalization(rejected(non_ground_input), none)).
+
 test(unicode_u2019_is_preserved) :-
     dcg_unicode(Input),
     normalize_reference_evidence(Input, Result),
@@ -299,14 +303,62 @@ test(silent_unicode_repair_is_not_accepted_as_equal) :-
     assertion(Equality == equality(unknown(behavioral_equality))).
 
 test(non_ground_input_is_rejected) :-
-    dcg_unicode(evidence(at(_, Span, Raw), Claim)),
-    Input = evidence(at(_Source, Span, Raw), Claim),
-    normalize_reference_evidence(Input, Result),
-    assertion(Result == normalization(rejected(non_ground_input), none)).
+    dcg_unicode(GroundInput),
+    GroundInput = evidence(
+        at(source(Basename, Path, Bytes, Sha256), Span, Raw),
+        claim(Label, Class, Facets)),
+    Direct = evidence(at(_Source, Span, Raw),
+                      claim(Label, Class, Facets)),
+    NestedSource = evidence(
+        at(source(nested(_BasenameVariable), Path, Bytes, Sha256), Span, Raw),
+        claim(Label, Class, Facets)),
+    NestedSpan = evidence(
+        at(source(Basename, Path, Bytes, Sha256),
+           lines(nested(_FirstLineVariable), 49),
+           Raw),
+        claim(Label, Class, Facets)),
+    NestedRaw = evidence(
+        at(source(Basename, Path, Bytes, Sha256),
+           Span,
+           raw_utf8([nested(_CodePointVariable)])),
+        claim(Label, Class, Facets)),
+    NestedLabel = evidence(
+        at(source(Basename, Path, Bytes, Sha256), Span, Raw),
+        claim(nested(_LabelVariable), Class, Facets)),
+    NestedClass = evidence(
+        at(source(Basename, Path, Bytes, Sha256), Span, Raw),
+        claim(Label, nested(_ClassVariable), Facets)),
+    NestedFacet = evidence(
+        at(source(Basename, Path, Bytes, Sha256), Span, Raw),
+        claim(Label, Class,
+              facets(established(nested(_TokenVariable)),
+                     not_applicable, not_applicable, not_applicable,
+                     not_applicable, not_applicable, not_applicable,
+                     not_applicable, established(exact_code_points),
+                     established(preserve_unicode)))),
+    WrongShape = not_evidence(_WrongShapeVariable),
+    assert_non_ground_rejected(Direct),
+    assert_non_ground_rejected(NestedSource),
+    assert_non_ground_rejected(NestedSpan),
+    assert_non_ground_rejected(NestedRaw),
+    assert_non_ground_rejected(NestedLabel),
+    assert_non_ground_rejected(NestedClass),
+    assert_non_ground_rejected(NestedFacet),
+    assert_non_ground_rejected(WrongShape),
+    numlist(1, 17000, OversizedAt),
+    assert_non_ground_rejected(evidence(OversizedAt, _LateVariable)),
+    reference_normalization_equal(NestedSource, GroundInput, Equality),
+    assertion(Equality ==
+              equality(rejected(left(non_ground_input)))).
 
 test(wrong_shape_is_rejected) :-
     normalize_reference_evidence(not_evidence, Result),
-    assertion(Result == normalization(rejected(malformed_shape), none)).
+    assertion(Result == normalization(rejected(malformed_shape), none)),
+    numlist(1, 17000, OversizedShapeArgument),
+    normalize_reference_evidence(
+        not_evidence(OversizedShapeArgument), OversizedResult),
+    assertion(OversizedResult ==
+              normalization(rejected(malformed_shape), none)).
 
 test(invalid_unicode_scalar_is_rejected) :-
     dcg_unicode(evidence(at(Source, Span, _), Claim)),
@@ -322,7 +374,22 @@ test(raw_utf8_4096_is_accepted_and_4097_is_rejected) :-
     assertion(AcceptedResult ==
               normalization(accepted, normalized(Accepted))),
     assertion(RejectedResult ==
-              normalization(rejected(resource_limit_exceeded), none)).
+              normalization(rejected(resource_limit_exceeded), none)),
+    Accepted = evidence(At, _),
+    MaximumDifference = difference(
+        At,
+        At,
+        claim(hypothesis, cross_source_difference,
+              facets(unknown(maximum_representation),
+                     not_applicable, not_applicable, not_applicable,
+                     not_applicable, not_applicable, not_applicable,
+                     not_applicable, not_applicable, not_applicable))),
+    normalize_reference_evidence(MaximumDifference, DifferenceResult),
+    assertion(DifferenceResult ==
+              normalization(
+                  unknown([cross_source_difference,
+                           unknown(signature, maximum_representation)]),
+                  normalized(MaximumDifference))).
 
 test(final_endpoint_is_accepted_and_overflow_is_rejected) :-
     span_edges([ValidDcg-OverflowDcg, ValidTalk-OverflowTalk,

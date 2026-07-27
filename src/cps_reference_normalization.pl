@@ -58,12 +58,56 @@ input_preflight(Input, Status, Kind, Ats, Label, Class, Facets) :-
         preflight_claim(Claim, Label, Class, Facets, ClaimStatus),
         combine_status(LeftStatus, RightStatus, EndpointStatus),
         combine_status(EndpointStatus, ClaimStatus, Status)
-    ;   Status = malformed_shape,
+    ;   malformed_term_status(Input, Status),
         Kind = invalid,
         Ats = [],
         Label = invalid,
         Class = invalid,
         Facets = invalid
+    ).
+
+% Each fixed field is inspected independently.  This prevents an oversized
+% earlier field from consuming the budget before a later fixed-field variable
+% is checked, while keeping cyclic and excess field inspection bounded.
+input_term_node_limit(17000).
+
+bounded_term_status(Term, Budget0, Budget, Status) :-
+    (   var(Term)
+    ->  Status = non_ground_input,
+        Budget = Budget0
+    ;   Budget0 =< 0
+    ->  Status = resource_limit_exceeded,
+        Budget = 0
+    ;   Budget1 is Budget0 - 1,
+        (   compound(Term)
+        ->  functor(Term, _Name, Arity),
+            bounded_argument_status(1, Arity, Term, Budget1, Budget, Status)
+        ;   Status = ok,
+            Budget = Budget1
+        )
+    ).
+
+bounded_argument_status(Index, Arity, Term, Budget0, Budget, Status) :-
+    (   Index > Arity
+    ->  Status = ok,
+        Budget = Budget0
+    ;   arg(Index, Term, Argument),
+        bounded_term_status(Argument, Budget0, Budget1, ArgumentStatus),
+        (   ArgumentStatus == ok
+        ->  Next is Index + 1,
+            bounded_argument_status(
+                Next, Arity, Term, Budget1, Budget, Status)
+        ;   Status = ArgumentStatus,
+            Budget = Budget1
+        )
+    ).
+
+malformed_term_status(Term, Status) :-
+    input_term_node_limit(Limit),
+    bounded_term_status(Term, Limit, _Remaining, TermStatus),
+    (   TermStatus == non_ground_input
+    ->  Status = non_ground_input
+    ;   Status = malformed_shape
     ).
 
 preflight_at(At, Status) :-
@@ -75,7 +119,7 @@ preflight_at(At, Status) :-
         preflight_raw(Raw, RawStatus),
         combine_status(SourceStatus, SpanStatus, AtStatus),
         combine_status(AtStatus, RawStatus, Status)
-    ;   Status = malformed_shape
+    ;   malformed_term_status(At, Status)
     ).
 
 preflight_source(Source, Status) :-
@@ -89,7 +133,7 @@ preflight_source(Source, Status) :-
         combine_status(BasenameStatus, PathStatus, First),
         combine_status(BytesStatus, ShaStatus, Second),
         combine_status(First, Second, Status)
-    ;   Status = malformed_shape
+    ;   malformed_term_status(Source, Status)
     ).
 
 preflight_span(Span, Status) :-
@@ -107,7 +151,7 @@ preflight_span(Span, Status) :-
         combine_status(PFStatus, PLStatus, PhysicalStatus),
         combine_status(VFStatus, VLStatus, VisibleStatus),
         combine_status(PhysicalStatus, VisibleStatus, Status)
-    ;   Status = malformed_shape
+    ;   malformed_term_status(Span, Status)
     ).
 
 preflight_raw(Raw, Status) :-
@@ -115,7 +159,7 @@ preflight_raw(Raw, Status) :-
     ->  Status = non_ground_input
     ;   Raw = raw_utf8(CodePoints)
     ->  raw_list_status(CodePoints, 0, Status)
-    ;   Status = malformed_shape
+    ;   malformed_term_status(Raw, Status)
     ).
 
 raw_list_status(List, Count, Status) :-
@@ -131,10 +175,14 @@ raw_list_status(List, Count, Status) :-
         ->  Status = non_ground_input
         ;   Count >= 4096
         ->  Status = resource_limit_exceeded
-        ;   Next is Count + 1,
-            raw_list_status(Rest, Next, Status)
+        ;   leaf_status(CodePoint, CodePointStatus),
+            (   CodePointStatus == ok
+            ->  Next is Count + 1,
+                raw_list_status(Rest, Next, Status)
+            ;   Status = CodePointStatus
+            )
         )
-    ;   Status = malformed_shape
+    ;   malformed_term_status(List, Status)
     ).
 
 preflight_claim(Claim, Label, Class, Facets, Status) :-
@@ -149,15 +197,16 @@ preflight_claim(Claim, Label, Class, Facets, Status) :-
         preflight_facets(Facets, FacetStatus),
         combine_status(LabelStatus, ClassStatus, ClaimStatus),
         combine_status(ClaimStatus, FacetStatus, Status)
-    ;   Status = malformed_shape,
+    ;   malformed_term_status(Claim, Status),
         Label = invalid,
         Class = invalid,
         Facets = invalid
     ).
 
 label_status(Label, Status) :-
-    (   var(Label)
-    ->  Status = non_ground_input
+    leaf_status(Label, LeafStatus),
+    (   LeafStatus \== ok
+    ->  Status = LeafStatus
     ;   valid_label(Label)
     ->  Status = ok
     ;   Status = malformed_shape
@@ -192,7 +241,7 @@ preflight_facets(Facets, Status) :-
         combine_status(Status45, Status67, Status4567),
         combine_status(Status0123, Status4567, Status0to7),
         combine_status(Status0to7, Status89, Status)
-    ;   Status = malformed_shape
+    ;   malformed_term_status(Facets, Status)
     ).
 
 preflight_facet(Facet, Status) :-
@@ -204,12 +253,13 @@ preflight_facet(Facet, Status) :-
     ->  token_status(Reason, Status)
     ;   Facet == not_applicable
     ->  Status = ok
-    ;   Status = malformed_shape
+    ;   malformed_term_status(Facet, Status)
     ).
 
 token_status(Token, Status) :-
-    (   var(Token)
-    ->  Status = non_ground_input
+    leaf_status(Token, LeafStatus),
+    (   LeafStatus \== ok
+    ->  Status = LeafStatus
     ;   atom(Token)
     ->  token_scalar_status(Token, 0, Status)
     ;   Status = malformed_shape
@@ -233,10 +283,8 @@ token_scalar_status(Token, Index, Status) :-
     ).
 
 leaf_status(Value, Status) :-
-    (   var(Value)
-    ->  Status = non_ground_input
-    ;   Status = ok
-    ).
+    input_term_node_limit(Limit),
+    bounded_term_status(Value, Limit, _Remaining, Status).
 
 combine_status(Left, Right, Status) :-
     (   Left == non_ground_input
