@@ -1,5 +1,48 @@
-# Source layout
+# Canonical source component matrix
 
-Only `cps_bootstrap.pl` is executable in Phase 0. The subdirectories reserve
-future architectural boundaries; their READMEs are contracts, not
-implementations.
+- SOURCE FACT — This file is the authoritative inventory and ownership matrix
+  for repository-root Prolog modules and canonical component directories under
+  `src/`.
+- PROJECT INTERPRETATION — A reserved directory contract records ownership,
+  entry gates, and proof expectations; it does not establish implemented
+  behavior.
+- PROJECT INTERPRETATION — An empty or similarly named workspace directory is
+  not a component.
+- PROJECT INTERPRETATION — A future plan may add or split a component only
+  with owner approval and synchronized updates to this matrix, the affected
+  component README, and the control records.
+
+## Root Prolog modules
+
+| Evidence | Component | Owning task | Current state | Purpose | Trust or representation boundary | Dependency or entry gate | Plan maturity |
+|---|---|---|---|---|---|---|---|
+| SOURCE FACT | [`cps_bootstrap.pl`](cps_bootstrap.pl) | Phase 0 infrastructure | DONE | Reports the implemented Phase 0 bootstrap stage. | Infrastructure only; it defines no domain representation or acceptance authority. | Phase 0 infrastructure acceptance. | **no approved ExecPlan yet**; the accepted Phase 0 infrastructure predates a task-specific domain plan. |
+| SOURCE FACT | [`cps_reference_normalization.pl`](cps_reference_normalization.pl) | T001 | DONE | Provides the accepted bounded source-normalization boundary. | Acceptance is syntactic only and does not establish semantic truth, behavioral equality, or legacy runtime behavior. | T001 accepted after its owner-approved frozen plan and verification. | [`T001 frozen approved plan`](../docs/plans/T001-source-audit-and-normalization-plan.md). |
+| SOURCE FACT | [`cps_law_claim_authority.pl`](cps_law_claim_authority.pl) | T002 | DONE | Provides the accepted bounded, one-hop law-claim-authority boundary. | T001 normalization supplies syntactic provenance validation only; the T002 boundary separately enforces its accepted source-relative authority contract. | T001 and the owner-approved T002 slice are accepted. | [`T002 frozen approved plan`](../docs/plans/T002-source-addressed-law-claim-authority-plan.md). |
+
+## Canonical component directories
+
+| Evidence | Component | Owning task(s) | Current state | Purpose | Trust or representation boundary | Dependency or entry gate | Plan maturity |
+|---|---|---|---|---|---|---|---|
+| PROJECT INTERPRETATION | [`ir/`](ir/README.md) | [`T003`](../tasks/backlog/T003-spec-and-program-ir.md) | PENDING | Reserves the Specification IR and Program AST component boundary. | Proposal representations must remain distinct from independently validated representations. | T002 accepted; implementation requires an owner-approved T003 ExecPlan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`inference/`](inference/README.md) | [`T004`](../tasks/backlog/T004-proof-kernel-skeleton.md) | PENDING | Reserves bounded proof-kernel inference responsibilities. | Proposal or backend output cannot authorize a result; only the later approved acceptance boundary may do so. | T002 and T003 accepted; implementation requires an owner-approved T004 ExecPlan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`verification/`](verification/README.md) | [`T004`](../tasks/backlog/T004-proof-kernel-skeleton.md), later reuse by [`T006`](../tasks/backlog/T006-reduction-vertical-slice.md) | PENDING | Reserves independent proof-record and Program-AST verification responsibilities. | T006 may reuse this component only through a later owner-approved ExecPlan; no workspace alias bypasses the inference/verification split. | T004 entry requires T002 and T003 acceptance; T006 reuse requires T002–T005 acceptance and a later approved plan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`cnl/`](cnl/README.md) | [`T005`](../tasks/backlog/T005-controlled-english-v0.md) | PENDING | Reserves the controlled-language component. | Parsing remains a proposal boundary until later validation and proof acceptance. | T003 and the relevant T004 validation contracts accepted; implementation requires an owner-approved T005 ExecPlan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`synthesis/`](synthesis/README.md) | [`T006`](../tasks/backlog/T006-reduction-vertical-slice.md) | PENDING | Reserves proposal generation for the bounded reduction slice. | Synthesizer or backend output is a proposal and cannot be its own proof. | T002–T005 accepted; implementation requires an owner-approved T006 ExecPlan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`rendering/`](rendering/README.md) | [`T006`](../tasks/backlog/T006-reduction-vertical-slice.md) | PENDING | Reserves deterministic, content-free rendering of accepted Program ASTs. | Rendering may expose accepted structure but may not introduce or decide semantics. | T002–T005 accepted; implementation requires an owner-approved T006 ExecPlan. | **no approved ExecPlan yet**. |
+| PROJECT INTERPRETATION | [`dialogue/`](dialogue/README.md) | [`T007`](../tasks/backlog/T007-teaching-lifecycle.md) | PENDING | Reserves the teaching-lifecycle interaction component. | Candidate teaching remains separate from review, activation, trust, and retirement. | T002 and T006 accepted; implementation requires an owner-approved T007 ExecPlan. | **no approved ExecPlan yet**. |
+| SOURCE FACT | [`knowledge/`](knowledge/README.md) | T002 accepted contracts; [`T007`](../tasks/backlog/T007-teaching-lifecycle.md) | DONE for the accepted T002 contract; PENDING for T007 behavior | Carries the accepted T002 knowledge-boundary contract and reserves T007 knowledge-lifecycle responsibilities. | The accepted T002 scope remains in the root authority module; no T007 lifecycle, storage, or mutation behavior is implemented here. | T002 is accepted; T007 behavior additionally requires T006 acceptance and an owner-approved T007 ExecPlan. | [`T002 frozen approved plan`](../docs/plans/T002-source-addressed-law-claim-authority-plan.md); **no approved ExecPlan yet** for T007 behavior. |
+
+## Directory exclusions
+
+- SOURCE FACT — T008 has no permanent `src` directory. Its
+  [`backlog task`](../tasks/backlog/T008-synthesis-technology-qualification.md)
+  requires its own approved ExecPlan to name any future component.
+- PROJECT INTERPRETATION — The removed workspace-only aliases `ce`,
+  `patterns`, `proof`, `render`, `synth`, and `verify` confer no architectural
+  meaning.
+- PROJECT INTERPRETATION — `ce` does not coexist with `cnl`; `render` does
+  not coexist with `rendering`; `synth` does not coexist with `synthesis`;
+  `verify` does not coexist with `verification`; `proof` does not bypass the
+  `inference`/`verification` split; and `patterns` is not a product boundary
+  before an owner-approved T006 plan establishes one.
