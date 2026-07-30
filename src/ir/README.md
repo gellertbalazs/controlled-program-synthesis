@@ -2,65 +2,69 @@
 
 ## Purpose
 
-- PROJECT INTERPRETATION — This directory reserves the canonical
-  Specification IR and distinct Program AST boundary described by
-  [`T003`](../../tasks/backlog/T003-spec-and-program-ir.md).
-- SOURCE FACT — The directory contract is not an implemented representation.
+- SOURCE FACT — This component implements one bounded validation boundary for
+  a closed typed-equality Specification proposal and a distinct
+  identity-shaped Program AST proposal.
+- SOURCE FACT — The accepted public module is
+  [`cps_ground_typed_equality_ir.pl`](cps_ground_typed_equality_ir.pl), owned
+  by [`T003`](../../tasks/done/T003-spec-and-program-ir.md).
 
-## Owning task(s)
+## Current state and plan
 
-- SOURCE FACT — [`T003 — Specification IR and Program AST`](../../tasks/backlog/T003-spec-and-program-ir.md)
-  owns this component.
+- SOURCE FACT — **DONE**. T003 V1 accepted the frozen option-1 candidate after
+  the GOV-004 acceptance-harness repair passed without changing candidate
+  bytes.
+- SOURCE FACT — The frozen authority is the
+  [owner-approved option-1 plan](../../docs/plans/T003-ground-typed-equality-ir-option-1-plan.md).
 
-## Current state
+## Public boundary
 
-- PROJECT INTERPRETATION — **PENDING**. T003 source analysis, planning, and
-  implementation have not begun.
-
-## Approved plan
-
-- SOURCE FACT — **no approved ExecPlan yet**. A future task-specific T003
-  ExecPlan is the required implementation authority.
-
-## Inputs and outputs
-
-- HYPOTHESIS — UNKNOWN. Term shapes, binders, equality representation,
-  validation envelopes, predicate names, and interchange formats remain
-  unapproved until the T003 ExecPlan.
+- SOURCE FACT — `validate_ground_typed_equality_pair/4` accepts a
+  Specification proposal, Program proposal, and T002 authority snapshot as
+  data and deterministically returns one finite ground
+  `ground_typed_equality_validation(Status, Audit)` result.
+- SOURCE FACT — `Status` explicitly distinguishes accepted, rejected, and
+  `unknown` outcomes, including malformed, unsupported, semantic, authority,
+  and bounded resource reasons.
+- SOURCE FACT — The validator does not bind, execute, assert, retract, or
+  otherwise mutate either proposal.
 
 ## Trust boundary
 
-- PROJECT INTERPRETATION — Proposed specifications and programs must remain
-  distinct from independently validated, ground representations; host
-  unification cannot silently define object-language binding or equality.
+- SOURCE FACT — Specification and Program proposals are structurally,
+  finitely, and independently inspected before semantic compatibility and
+  T002 authority assessment.
+- SOURCE FACT — Only fresh validated data may appear in an accepted result;
+  caller-supplied accepted-looking terms confer no authority.
+- PROJECT INTERPRETATION — Acceptance establishes the approved structural,
+  typing, scope, compatibility, and source-relative authority contract. It
+  does not prove equality truth, prove Program satisfaction, execute a
+  Program, or authorize rendering.
 
-## Allowed responsibilities
+## Bounds and determinism
 
-- PROJECT INTERPRETATION — After plan approval, this component may own only
-  the representation and validation responsibilities expressly bounded by
-  T003 and that plan.
+- SOURCE FACT — The option-1 contract uses one canonical preorder
+  depth-first left-to-right Specification-before-Program observation counter.
+  Visits 1-512 are inspectable; before visit 513 the applicable Specification
+  or Program cell-resource result is returned without inspecting later data.
+- SOURCE FACT — Identifier, scalar, list, depth, cell, and inherited T002
+  limits are explicit and fail closed. Every public input-mode call has one
+  ground acyclic result.
+
+## Verification evidence
+
+- SOURCE FACT — The focused T003 inventory contains 44 named tests, including
+  the independent visit-position model and positions 512, 513, and 520.
+- SOURCE FACT — The repaired canonical gate passed infrastructure 34/34,
+  repository unit 112/112, and integration 15/15 with zero failures, errors,
+  or skips.
+- SOURCE FACT — T003-DL-001 through T003-DL-003 are closed and retained as
+  regressions. GOV-004-DL-001 was a control-plane fixture defect and changed
+  no product byte.
 
 ## Explicit non-goals
 
-- SOURCE FACT — No IR schema, Program AST, parser, solver backend, code
-  generator, serializer, or host-goal representation is authorized now.
-
-## Entry criteria
-
-- SOURCE FACT — T003 requires T002 to be accepted.
-- PROJECT INTERPRETATION — Owner approval of a task-specific T003 ExecPlan is
-  required before product or test changes.
-
-## Required unit and integration evidence
-
-- PROJECT INTERPRETATION — The future T003 ExecPlan must name focused schema,
-  scope, type, malformed-input, and boundary unit evidence plus the
-  specification-to-Program-AST integration evidence required by the
-  [`T003 backlog contract`](../../tasks/backlog/T003-spec-and-program-ir.md);
-  the complete repository unit, integration, and canonical gates must pass.
-
-## Handoff
-
-- PROJECT INTERPRETATION — A completed T003 slice must synchronize this
-  contract with the [canonical component matrix](../README.md) and control
-  records, preserve proposal/acceptance separation, and stop before T004.
+- SOURCE FACT — This component is not a parser, theorem prover, proof kernel,
+  synthesizer, executor, serializer, code generator, or renderer.
+- SOURCE FACT — T004 proof-kernel work requires its own source analysis,
+  frozen owner-approved ExecPlan, and independently tested implementation.

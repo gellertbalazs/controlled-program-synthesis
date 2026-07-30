@@ -3,13 +3,13 @@
 ## Purpose
 
 - PROJECT INTERPRETATION — This directory reserves the controlled-language
-  boundary described by [`T005`](../../tasks/backlog/T005-controlled-english-v0.md).
+  boundary described by [`T005`](../../tasks/ready/T005-controlled-english-v0.md).
 - SOURCE FACT — The directory contract is not a grammar, parser, or semantic
   implementation.
 
 ## Owning task(s)
 
-- SOURCE FACT — [`T005 — Controlled English v0`](../../tasks/backlog/T005-controlled-english-v0.md)
+- SOURCE FACT — [`T005 — Controlled English v0`](../../tasks/ready/T005-controlled-english-v0.md)
   owns this component.
 
 ## Current state
@@ -56,7 +56,7 @@
 
 - PROJECT INTERPRETATION — The future T005 ExecPlan must name focused unit
   evidence and the text-to-Specification-IR integration evidence required by
-  the [`T005 backlog contract`](../../tasks/backlog/T005-controlled-english-v0.md);
+  the [`T005 planning contract`](../../tasks/ready/T005-controlled-english-v0.md);
   the complete repository unit, integration, and canonical gates must pass.
 
 ## Handoff
