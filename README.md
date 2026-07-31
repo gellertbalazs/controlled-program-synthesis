@@ -1,601 +1,580 @@
 # Controlled Program Synthesis
 
-> A SWI-Prolog research prototype for turning tightly bounded specification
-> data into independently checked results. It is deliberately **not** a
-> general English-to-code system yet.
+## Describe the program. Get checked pseudocode.
 
-Controlled Program Synthesis (CPS) explores a simple but demanding idea: a
-parser, synthesizer, solver, proof assistant, or AI may propose an artifact,
-but a proposal never becomes trusted merely because it was generated. Every
-accepted result must cross a finite, deterministic, source-relative checking
-boundary.
+Controlled Program Synthesis (CPS) explores a direct way to build software:
+write a bounded specification of **what the program must do**, let the system
+construct a program shape, check that shape independently, and present the
+result as readable, language-neutral pseudocode.
 
-## The overall picture
-
-A finished CPS interaction is intended to feel like this:
-
-```mermaid
-flowchart LR
-    U["User input<br/>bounded controlled English"]
-    P["Complete parsing<br/>+ typed Specification IR"]
-    S["Program + proof<br/>proposal"]
-    C["Independent checks<br/>authority + proof + Program AST"]
-    O["Output<br/>content-free pseudocode"]
-
-    U --> P --> S --> C --> O
-
-    classDef input fill:#eef6ff,stroke:#337ab7,color:#173a5e,stroke-width:2px;
-    classDef proposal fill:#f3edff,stroke:#7254a8,color:#352550,stroke-width:2px;
-    classDef checker fill:#e3f8eb,stroke:#20834f,color:#103d27,stroke-width:2px;
-    classDef output fill:#fff5dc,stroke:#b26a00,color:#5e3500,stroke-width:2px;
-    class U,P input;
-    class S proposal;
-    class C checker;
-    class O output;
-```
-
-> **Important:** the examples below illustrate the intended user experience;
-> they are not an accepted end-to-end interface. The exact one-to-three-value
-> mappings exist only in the unaccepted T006 candidate. Today, the completed
-> T005 boundary stops at validated Specification IR and emits no pseudocode.
-
-**PROJECT INTERPRETATION —** Read these examples as an orientation aid, not a
-syntax or compatibility promise. The input is shown as space-separated token
-atoms; the output is a content-free expression rather than executable code.
-
-### Example A — one value needs no operation
-
-User input (controlled English):
+> **Vision demo:** this README demonstrates the intended experience. The
+> repository is a research prototype, and not every example below is available
+> end to end yet.
 
 ```text
-specification reduce_spec
-program reduce_program
-reduces sequence alpha
-as item from left
-using operation combine
-in definition_space combine_space
-using premise combine_premise
++----------------------+      +----------------------+      +----------------------+
+| SOFTWARE SPEC        | ---> | SYNTHESIZE + CHECK   | ---> | PSEUDOCODE           |
+| what must be true    |      | justify every step   |      | how it can be done   |
++----------------------+      +----------------------+      +----------------------+
 ```
 
-Intended pseudocode expression:
+The goal is not to hide software behind a clever prompt. The goal is to make
+the requested behavior, the proposed algorithm, and the reason it is accepted
+separate and inspectable.
+
+## A complete interaction in 15 seconds
+
+You write a small controlled specification:
 
 ```text
-alpha
+software BasketTotal
+
+input prices as a sequence of Money
+output total as Money
+
+require total equals the sum of prices from left to right
+when prices is empty use 0
 ```
 
-### Example B — combine two values
-
-User input (controlled English):
+CPS presents the checked program structure as pseudocode:
 
 ```text
-specification reduce_spec
-program reduce_program
-reduces sequence alpha then beta
-as item from left
-using operation combine
-in definition_space combine_space
-using premise combine_premise
+FUNCTION BasketTotal(prices)
+    total <- 0
+
+    FOR EACH price IN prices DO
+        total <- total + price
+    END FOR
+
+    RETURN total
+END FUNCTION
 ```
 
-Intended pseudocode expression:
+The specification says what result is required. The pseudocode makes the
+chosen algorithm visible. The empty-input behavior is explicit rather than
+guessed.
+
+## Start small: structure becomes visible
+
+The smallest examples reveal the central idea without domain noise.
+
+### One value
 
 ```text
-combine(alpha,beta)
+SPECIFICATION
+    reduce the sequence [alpha] from the left using combine
+
+PSEUDOCODE
+    alpha
 ```
 
-### Example C — the grouping is explicitly left-to-right
+There is nothing to combine, so the only value is the result.
 
-User input (controlled English):
+### Two values
 
 ```text
-specification reduce_spec
-program reduce_program
-reduces sequence alpha then beta then gamma
-as item from left
-using operation combine
-in definition_space combine_space
-using premise combine_premise
+SPECIFICATION
+    reduce the sequence [alpha, beta] from the left using combine
+
+PSEUDOCODE
+    combine(alpha, beta)
 ```
 
-Intended pseudocode expression:
+### Three values
 
 ```text
-combine(combine(alpha,beta),gamma)
+SPECIFICATION
+    reduce the sequence [alpha, beta, gamma] from the left using combine
+
+PSEUDOCODE
+    combine(combine(alpha, beta), gamma)
 ```
 
-The third result preserves the requested grouping. It is not silently changed
-to `combine(alpha,combine(beta,gamma))`, balanced, parallelized, or executed.
-Even in the intended complete system, pseudocode would be emitted only after
-the original authority snapshot, proof, and independently reconstructed
-Program AST had all been accepted. Missing evidence would produce an explicit
-non-accepting status instead of guessed code.
-
-The repository currently contains completed, narrow slices for evidence
-normalization, authority assessment, typed equality proposals, identity-proof
-replay, and one fixed controlled-English fragment. A reduction candidate also
-exists, but its T006 workflow is blocked and its amended plan is unapproved;
-it is not an accepted capability.
-
-## Status at a glance
-
-**SOURCE FACT —** The canonical task records mark T001 through T005 `DONE`.
-They mark T006 `BLOCKED` with no eligible step while an amended plan awaits an
-owner decision. T007 and T008 remain backlog work.
-
-**PROJECT INTERPRETATION —** `DONE` means that one bounded task contract
-completed its governed workflow. It does not mean that the overall system is
-finished, production-ready, or generally intelligent.
-
-```mermaid
-flowchart LR
-    P0["Phase 0<br/>bootstrap"] --> T1["T001<br/>evidence normalization"]
-    T1 --> T2["T002<br/>authority assessment"]
-    T2 --> T3["T003<br/>typed equality IR"]
-    T3 --> T4["T004<br/>identity-proof replay"]
-    T4 --> T5["T005<br/>fixed CNL fragment"]
-    T5 -. "candidate exists;<br/>approval does not" .-> T6["T006<br/>fixed-left reduction"]
-    T6 -. "future dependency" .-> T7["T007/T008<br/>later research"]
-
-    classDef done fill:#d9fbe5,stroke:#177245,color:#0b3d24,stroke-width:2px;
-    classDef blocked fill:#fff0d2,stroke:#b26a00,color:#5e3500,stroke-width:2px;
-    classDef future fill:#edf1f7,stroke:#697386,color:#303846,stroke-width:1.5px,stroke-dasharray:5 4;
-    class P0,T1,T2,T3,T4,T5 done;
-    class T6 blocked;
-    class T7 future;
-```
-
-| Slice | Bounded capability | Workflow state | What that does **not** establish |
-| --- | --- | --- | --- |
-| Phase 0 | Reports the bootstrap stage | Implemented | Any domain behavior |
-| T001 | Validates and normalizes immutable evidence terms syntactically | `DONE` | Semantic truth or legacy runtime behavior |
-| T002 | Assesses one closed, source-relative law-claim authority snapshot | `DONE` | Truth outside the supplied snapshot |
-| T003 | Validates one ground typed-equality Specification proposal and one identity-shaped Program proposal | `DONE` | Equality truth, execution, or general correctness |
-| T004 | Replays one bounded source-relative identity proof proposal | `DONE` | Proof search, theorem discovery, or Program execution |
-| T005 | Parses one fixed pre-tokenized equality fragment and freshly delegates to T003 | `DONE` | General English, synthesis, proof, or rendering |
-| T006 | Unaccepted fixed-left-reduction source and tests | `BLOCKED`; amended plan unapproved | An accepted synthesizer, checker, or renderer |
-| T007/T008 | Teaching lifecycle and technology qualification | `PENDING` | Implemented behavior |
-
-The [canonical source component matrix](src/README.md) describes ownership and
-the exact boundary of each published module.
-
-## A 60-second tour
-
-### 1. Prerequisite
-
-This checkout was verified with SWI-Prolog 10.0.2. Other versions may work,
-but have not been checked here.
-
-```sh
-git clone https://github.com/gellertbalazs/controlled-program-synthesis.git
-cd controlled-program-synthesis
-swipl --version
-```
-
-There is no build step and no package installation step for the published
-Prolog modules.
-
-### 2. Ask the bootstrap what exists
-
-From the repository root:
-
-```sh
-swipl -f none -q -s src/cps_bootstrap.pl \
-  -g "cps_bootstrap:bootstrap_stage(Stage),write_canonical(Stage),nl,halt"
-```
-
-Expected output:
+The grouping is part of the program, not a formatting accident:
 
 ```text
-phase0
+              combine
+             /       \
+        combine      gamma
+        /     \
+    alpha     beta
 ```
 
-The answer is intentionally modest. The repository is still Phase 0 even
-though several small domain boundaries now exist.
+Left grouping is different from `combine(alpha, combine(beta, gamma))`. CPS
+must preserve the requested structure exactly; it may not silently balance,
+reorder, parallelize, or reinterpret the operation.
 
-### 3. Watch malformed evidence fail closed
+## Example gallery
 
-This call deliberately supplies an atom where T001 expects a structured
-evidence term:
+The examples below use a compact controlled-English style for readability.
+They illustrate the intended interaction and output format, not a promise that
+every word shown is already accepted syntax.
 
-```sh
-swipl -f none -q -s src/cps_reference_normalization.pl \
-  -g "cps_reference_normalization:normalize_reference_evidence(foo,R),write_canonical(R),nl,halt"
-```
+### 1. Return a value unchanged
 
-Expected output:
+You specify:
 
 ```text
-normalization(rejected(malformed_shape),none)
+software KeepValue
+
+input value as Item
+output result as Item
+
+require result equals value
 ```
 
-That rejection is a successful demonstration. The validator returns an
-explicit, ground result rather than guessing, executing the input, or silently
-coercing it.
-
-### 4. Run one accepted controlled-English case
-
-T005 recognizes this exact 20-token shape:
-
-```prolog
-[
-    specification, spec_main,
-    binds, spec_object,
-    as, element,
-    and, requires,
-    equality, represented_equal,
-    for, spec_object,
-    equals, value,
-    in, definition_space, adjacent_defined,
-    using, premise, adjacent_applications
-]
-```
-
-Read with spaces, it says:
+CPS shows:
 
 ```text
-specification spec_main binds spec_object as element
-and requires equality represented_equal
-for spec_object equals value
-in definition_space adjacent_defined
-using premise adjacent_applications
+FUNCTION KeepValue(value)
+    RETURN value
+END FUNCTION
 ```
 
-This is a machine language with English-like keywords, not free-form English.
-The complete accepted example also supplies a compatible identity-shaped
-Program proposal and a source-relative authority snapshot. Run the existing
-executable fixture:
+### 2. Transform every item
 
-```sh
-swipl -f none -q -s tests/unit/controlled_english_v0_unit_tests.pl \
-  -g "run_tests([cps_controlled_english_v0:base_sentence_accepts_exact_fresh_t003_result]),halt"
-```
-
-The test exits successfully only if T005 returns the fresh validated payload
-below and its audit records the complete parse and nested T003/T002 result:
-
-```prolog
-validated_specification(
-    specification_id(spec_main),
-    nominal_type(type_id(element)),
-    scoped_equality(
-        object_binder(
-            binder_id(spec_object),
-            type_id(element)),
-        equality_relation(
-            equality_id(represented_equal),
-            object_reference(
-                binder_id(spec_object),
-                type_id(element)),
-            object_value(
-                atom_value(value),
-                type_id(element)))),
-    definition_space_id(adjacent_defined),
-    premise_id(adjacent_applications)
-)
-```
-
-The larger accepted fixture is intentional: authority, provenance, Program
-shape, and premise identity stay explicit instead of being hidden behind
-defaults. See the
-[T005 unit test](tests/unit/controlled_english_v0_unit_tests.pl) for every
-input byte and every assertion.
-
-## What happens in the T005 demonstration
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Caller as Demo caller
-    participant CNL as T005 fixed CNL
-    participant IR as T003 IR validator
-    participant Auth as T002 authority checker
-
-    Caller->>CNL: token list + Program proposal + authority snapshot
-    CNL->>CNL: bounded structural preflight
-    CNL->>CNL: enumerate every complete fixed-grammar reading
-    CNL->>CNL: deduplicate equivalent Specification proposals
-    loop Every distinct proposal
-        CNL->>IR: fresh Specification + original Program + authority
-        IR->>IR: independently inspect Specification and Program
-        IR->>Auth: assess original authority snapshot
-        Auth-->>IR: accepted / rejected / unknown
-        IR-->>CNL: one ground validation result
-    end
-    CNL-->>Caller: accepted / rejected / unsupported / unknown / resource_exhausted / ambiguous
-```
-
-The important detail is the direction of authority: parser output flows into
-the checker. Parser output does not tell the checker that it has already been
-accepted.
-
-## The trust model
-
-**PROJECT INTERPRETATION —** The long-term architecture separates development,
-proposal/search, deterministic acceptance, and content-free rendering. The
-current repository implements only the narrow solid-line boundaries shown
-below; the dashed proposal backends and final renderer are future work.
-
-```mermaid
-flowchart TB
-    subgraph Sources["Explicit inputs"]
-        E["Evidence + provenance"]
-        A["Authority snapshot"]
-        U["Token / Spec / Program / proof data"]
-    end
-
-    subgraph Proposal["Proposal plane — never trusted by origin"]
-        C["Fixed parser"]
-        H["Human-authored proposal"]
-        X["AI / solver / synthesizer<br/>(future)"]
-    end
-
-    subgraph Acceptance["Deterministic acceptance plane"]
-        N["T001<br/>normalize evidence"]
-        L["T002<br/>assess authority"]
-        I["T003<br/>validate typed pair"]
-        P["T004<br/>replay proof"]
-        D{"Explicit status"}
-    end
-
-    E --> N --> L
-    A --> L
-    U --> C
-    U --> H
-    U -.-> X
-    C --> I
-    H --> I
-    H --> P
-    X -. "proposal only" .-> I
-    X -. "proposal only" .-> P
-    L --> I
-    P -->|fresh typed-pair check| I
-    I --> D
-    P --> D
-    D -->|accepted| V["Fresh checked data"]
-    D -->|all other outcomes| S["Stop with reason + audit"]
-    V -. "future; adds no meaning" .-> R["Content-free renderer"]
-
-    classDef input fill:#eef6ff,stroke:#337ab7,color:#173a5e;
-    classDef proposal fill:#f3edff,stroke:#7254a8,color:#352550;
-    classDef checker fill:#e3f8eb,stroke:#20834f,color:#103d27,stroke-width:2px;
-    classDef stop fill:#fff0d2,stroke:#b26a00,color:#5e3500;
-    classDef future fill:#f5f6f8,stroke:#697386,color:#303846,stroke-dasharray:5 4;
-    class E,A,U input;
-    class C,H proposal;
-    class X,R future;
-    class N,L,I,P,D,V checker;
-    class S stop;
-```
-
-An `accepted` result is always relative to the exact checked fragment,
-premises, provenance, bounds, and checker contract. It is not a claim that the
-system understood arbitrary intent or proved unrestricted program
-correctness.
-
-## Public bounded APIs
-
-| Module | Public predicate | Result envelope | Exact role |
-| --- | --- | --- | --- |
-| [Bootstrap](src/cps_bootstrap.pl) | `bootstrap_stage/1` | `phase0` | Reports the implemented project stage |
-| [T001 normalization](src/cps_reference_normalization.pl) | `normalize_reference_evidence/2` | `normalization(Status, Normalized)` | Syntactically validates immutable, source-addressed evidence |
-| [T001 comparison](src/cps_reference_normalization.pl) | `reference_normalization_equal/3` | `equality(Status)` | Compares complete normalization results structurally |
-| [T002 authority](src/cps_law_claim_authority.pl) | `assess_law_claim_authority/2` | `authority_assessment(Status, Audit)` | Checks one closed, one-hop source-relative authority snapshot |
-| [T003 typed pair](src/ir/cps_ground_typed_equality_ir.pl) | `validate_ground_typed_equality_pair/4` | `ground_typed_equality_validation(Status, Audit)` | Checks one Specification proposal and a distinct identity-shaped Program proposal |
-| [T004 replay](src/verification/cps_source_relative_identity_replay.pl) | `check_source_relative_identity_proof/5` | `proof_replay(Status, Audit)` | Replays one supplied identity proof against fresh predecessor checks |
-| [T005 CNL](src/cnl/cps_controlled_english_v0.pl) | `validate_controlled_english_v0/4` | `controlled_english_validation(Status, Audit)` | Parses the fixed token fragment and validates every distinct proposal through T003 |
-
-T001 through T005 treat caller inputs as data. Their approved input-mode
-contracts are bounded, avoid mutating the supplied terms, and return explicit
-results. Exact constructors, limits, priority rules, and audit fields are
-documented beside the modules and exercised in their unit tests.
-
-### Outcome vocabulary
-
-The exact envelope varies by boundary, but later slices deliberately preserve
-these meanings:
-
-| Outcome | Meaning |
-| --- | --- |
-| `accepted(...)` | The artifact satisfied this exact bounded checker contract |
-| `rejected(...)` | Inspected evidence showed a malformed, inconsistent, forbidden, or negative condition |
-| `unsupported(...)` | The input was well-shaped enough to identify a feature outside the approved fragment |
-| `unknown(...)` | Required evidence was missing or insufficient; the checker did not guess |
-| `resource_exhausted(...)` | A declared bound prevented the next observation |
-| `ambiguous(...)` | Multiple distinct validated readings remained |
-
-Not every predicate uses every outcome family. No non-accepting outcome is a
-license to publish or execute a proposal.
-
-## T006 preview: the idea, not an accepted feature
-
-**SOURCE FACT —** A T006 candidate source file and tests exist in the
-repository, but the archived delivery attempt is blocked and the amended
-ExecPlan is unapproved. No T006 step is eligible. The
-[candidate module](src/cps_fixed_left_reduction_v0.pl) is therefore not a
-supported public API.
-
-**PROJECT INTERPRETATION —** It is safe to use the following as a visual
-preview of the intended bounded slice, not as evidence that synthesis or
-rendering has been accepted.
-
-```mermaid
-flowchart LR
-    V["Ground values<br/>alpha, beta, gamma"] --> F["Fixed left grouping"]
-    F --> AST["combine(<br/>  combine(alpha, beta),<br/>  gamma<br/>)"]
-    AST --> C["Independent candidate check"]
-    C --> O["Content-free view<br/>combine(combine(alpha,beta),gamma)"]
-
-    classDef preview fill:#fff0d2,stroke:#b26a00,color:#5e3500,stroke-width:2px;
-    class V,F,AST,C,O preview;
-```
-
-The proposed slice is intentionally tiny: one nonempty sequence, one fixed
-`combine` constructor, one to three ground values, and fixed left nesting. It
-does not authorize arbitrary operations, reassociation, balancing, parallel
-reduction, lambda reduction, execution, or a general renderer.
-
-## Safety properties being built
-
-- **Source-relative trust.** Used premises must be active and trusted under
-  the supplied policy and provenance; a name or shared identifier is not
-  authority by itself.
-
-- **Proposal/acceptance separation.** Specifications, Programs, proofs,
-  parser output, solver output, and future AI output remain proposals until an
-  independent checker reconstructs accepted data.
-
-- **Fail-closed outcomes.** Malformed, cyclic, non-ground, unsupported,
-  ambiguous, missing-evidence, and resource cases are surfaced explicitly at
-  the boundaries where they apply.
-
-- **Finite observation.** List lengths, scalar lengths, nesting depth,
-  inspected cells, proof structure, and process time are bounded by the
-  owning slice rather than left implicit.
-
-- **Inputs stay data.** User and knowledge terms are not passed to arbitrary
-  `call/1`, `assert/1`, `assertz/1`, `retract/1`, or equivalent
-  meta-execution/database mutation.
-
-- **Rendering adds no meaning.** A future accepted renderer may expose only
-  independently checked Program-AST structure. It may not invent, repair, or
-  select semantics.
-
-These are fragment-relative engineering guarantees, not absolute guarantees
-of intent understanding, truth, correctness, termination, or hallucination
-freedom.
-
-## What is deliberately not here yet
-
-- no tokenizer or general controlled-English parser;
-- no general synthesis or search algorithm;
-- no arbitrary theorem prover or proof construction engine;
-- no Program execution runtime;
-- no accepted general renderer, code generator, or target language;
-- no mutable knowledge lifecycle or teaching dialogue;
-- no persistence, service, network, supervisor, or worker protocol;
-- no qualified SMT, SyGuS, proof-assistant, equality-saturation, or AI
-  backend.
-
-Keeping these absences visible is part of the demonstration: the project
-prefers an honest `unknown`, `unsupported`, or blocked workflow state to an
-unearned success claim.
-
-## Testing the published modules
-
-Each public boundary has a focused PlUnit file. These commands need only the
-published source and test tree:
-
-```sh
-swipl -f none -q -s tests/unit/bootstrap_unit_tests.pl \
-  -g "run_tests,halt"
-
-swipl -f none -q -s tests/unit/reference_normalization_unit_tests.pl \
-  -g "run_tests,halt"
-
-swipl -f none -q -s tests/unit/law_claim_authority_unit_tests.pl \
-  -g "run_tests,halt"
-
-swipl -f none -q -s tests/unit/ground_typed_equality_ir_unit_tests.pl \
-  -g "run_tests,halt"
-
-swipl -f none -q -s tests/unit/source_relative_identity_replay_unit_tests.pl \
-  -g "run_tests,halt"
-
-swipl -f none -q -s tests/unit/controlled_english_v0_unit_tests.pl \
-  -g "run_tests,halt"
-```
-
-### Optional tracked-tree integration inventory
-
-Clean-process integration coverage lives in
-[tests/integration/bootstrap_integration_tests.pl](tests/integration/bootstrap_integration_tests.pl).
-The historical filename is narrower than its present coverage, which includes
-the unaccepted T006 candidate as well as completed boundaries. Running this
-file does not make T006 accepted or change its blocked workflow state.
-
-```sh
-swipl -f none -q -s tests/integration/bootstrap_integration_tests.pl \
-  -g "run_tests,halt"
-```
-
-### Maintainer-only quality gates
-
-The full maintainer checkout also contains intentionally unpublished workflow
-scripts, manifests, task records, and the five immutable local references.
-In that checkout, the documented gate sequence is:
+You specify:
 
 ```text
-swipl -f none -q -s scripts/doctor.pl
-swipl -f none -q -s scripts/test_unit.pl
-swipl -f none -q -s scripts/test_integration.pl
-swipl -f none -q -s scripts/test.pl
-swipl -f none -q -s scripts/check.pl
+software NormalizeNames
+
+input names as a sequence of Text
+output normalized_names as a sequence of Text
+
+require each output item equals normalize of the corresponding input item
+preserve input order
 ```
 
-`scripts/check.pl` is the canonical repository gate. A successful command is
-evidence for the exact checked bytes and workflow state, not a permanent
-waiver for later changes or warnings.
-
-## Repository map
+CPS shows:
 
 ```text
-controlled-program-synthesis/
-├── src/
-│   ├── cps_reference_normalization.pl       # T001
-│   ├── cps_law_claim_authority.pl           # T002
-│   ├── ir/                                  # T003
-│   ├── verification/                        # T004
-│   ├── cnl/                                 # T005
-│   ├── cps_fixed_left_reduction_v0.pl       # unaccepted T006 candidate
-│   ├── synthesis/                           # reserved
-│   ├── rendering/                           # reserved
-│   └── dialogue/                            # reserved
-├── tests/
-│   ├── unit/                                # boundary and interaction matrices
-│   └── integration/                         # fresh-process behavior
-├── docs/
-│   ├── architecture/                        # trust and component design
-│   ├── decisions/                           # architecture decisions
-│   ├── evaluation/                          # evaluation strategy
-│   └── reference/                           # evidence orientation
-├── knowledge/                               # reserved governed knowledge areas
-├── benchmarks/                              # reserved versioned corpora
-└── references/README.md                     # roles of unpublished immutable inputs
+FUNCTION NormalizeNames(names)
+    normalized_names <- empty sequence
+
+    FOR EACH name IN names DO
+        APPEND normalize(name) TO normalized_names
+    END FOR
+
+    RETURN normalized_names
+END FUNCTION
 ```
 
-The five local research inputs comprise one NLP/Prolog text, two legacy Prolog
-artifacts, and two *Elements of Programming* references. They are immutable,
-intentionally unpublished, and checked by path, size, and SHA-256 in the full
-maintainer environment. The legacy Prolog files are inspected only as inert,
-line-addressable evidence; they are not consulted or loaded as product
-modules.
+### 3. Keep only matching items
 
-## How to read project claims
+You specify:
 
-The repository uses four evidence labels so that fact, interpretation, and
-open design work do not blur together:
+```text
+software AvailableProducts
 
-| Label | Meaning |
-| --- | --- |
-| `SOURCE FACT` | Directly established by a cited source, repository artifact, or recorded check |
-| `PROJECT INTERPRETATION` | The project's bounded reading or engineering consequence of source facts |
-| `PROPOSED DECISION` | A reviewable choice that is not yet approved authority |
-| `HYPOTHESIS` | An unresolved claim that requires evidence; often explicitly `UNKNOWN` |
+input products as a sequence of Product
+output available_products as a sequence of Product
 
-## Navigation
+require output contains exactly the products where product.available is true
+preserve input order
+```
+
+CPS shows:
+
+```text
+FUNCTION AvailableProducts(products)
+    available_products <- empty sequence
+
+    FOR EACH product IN products DO
+        IF product.available = true THEN
+            APPEND product TO available_products
+        END IF
+    END FOR
+
+    RETURN available_products
+END FUNCTION
+```
+
+### 4. Filter, transform, and total
+
+You specify:
+
+```text
+software ApprovedRevenue
+
+input orders as a sequence of Order
+output revenue as Money
+
+use only orders where order.status equals approved
+for each used order compute order.amount minus order.refund
+replace a negative computed amount with 0
+require revenue equals the sum of the computed amounts
+when no order is used return 0
+```
+
+CPS shows:
+
+```text
+FUNCTION ApprovedRevenue(orders)
+    revenue <- 0
+
+    FOR EACH order IN orders DO
+        IF order.status = "approved" THEN
+            net_amount <- order.amount - order.refund
+
+            IF net_amount < 0 THEN
+                net_amount <- 0
+            END IF
+
+            revenue <- revenue + net_amount
+        END IF
+    END FOR
+
+    RETURN revenue
+END FUNCTION
+```
+
+### 5. Find the first match
+
+You specify:
+
+```text
+software FirstOverdueAccount
+
+input accounts as a sequence of Account
+output result as Account or none
+
+require result equals the first account where account.overdue is true
+preserve input order
+when no account matches return none
+```
+
+CPS shows:
+
+```text
+FUNCTION FirstOverdueAccount(accounts)
+    FOR EACH account IN accounts DO
+        IF account.overdue = true THEN
+            RETURN account
+        END IF
+    END FOR
+
+    RETURN none
+END FUNCTION
+```
+
+### 6. Make a boundary decision
+
+You specify:
+
+```text
+software ShippingFee
+
+input basket_total as Money
+output fee as Money
+
+when basket_total is at least 50 require fee equals 0
+otherwise require fee equals 5
+```
+
+CPS shows:
+
+```text
+FUNCTION ShippingFee(basket_total)
+    IF basket_total >= 50 THEN
+        RETURN 0
+    END IF
+
+    RETURN 5
+END FUNCTION
+```
+
+The exact boundary is visible: a total of `50` receives free shipping.
+
+### 7. Choose deterministically
+
+You specify:
+
+```text
+software BestOffer
+
+input offers as a non-empty sequence of Offer
+output best as Offer
+
+prefer the offer with the lowest price
+when prices are equal prefer the lowest supplier_id
+```
+
+CPS shows:
+
+```text
+FUNCTION BestOffer(offers)
+    best <- first item of offers
+
+    FOR EACH offer IN remaining items of offers DO
+        lower_price <- offer.price < best.price
+        same_price <- offer.price = best.price
+        lower_id <- offer.supplier_id < best.supplier_id
+
+        IF lower_price OR (same_price AND lower_id) THEN
+            best <- offer
+        END IF
+    END FOR
+
+    RETURN best
+END FUNCTION
+```
+
+The tie-break rule prevents two equally plausible outputs from being chosen
+arbitrarily.
+
+### 8. Group and summarize
+
+You specify:
+
+```text
+software SpendByCustomer
+
+input orders as a sequence of Order
+output totals as a map from CustomerId to Money
+
+for every customer_id require its total equals the sum of order.amount
+for orders having that customer_id
+when a customer_id is first seen start its total at 0
+```
+
+CPS shows:
+
+```text
+FUNCTION SpendByCustomer(orders)
+    totals <- empty map
+
+    FOR EACH order IN orders DO
+        customer_id <- order.customer_id
+
+        IF totals does not contain customer_id THEN
+            totals[customer_id] <- 0
+        END IF
+
+        totals[customer_id] <- totals[customer_id] + order.amount
+    END FOR
+
+    RETURN totals
+END FUNCTION
+```
+
+### 9. Validate with explicit priority
+
+You specify:
+
+```text
+software SignupDecision
+
+input email as Text
+input age as Integer
+output decision as accepted or rejected with reason
+
+reject missing_email when email is empty
+otherwise reject invalid_email when email is not valid
+otherwise reject age_requirement when age is less than 18
+otherwise accept
+```
+
+CPS shows:
+
+```text
+FUNCTION SignupDecision(email, age)
+    IF email is empty THEN
+        RETURN rejected("missing_email")
+    END IF
+
+    IF email is not valid THEN
+        RETURN rejected("invalid_email")
+    END IF
+
+    IF age < 18 THEN
+        RETURN rejected("age_requirement")
+    END IF
+
+    RETURN accepted
+END FUNCTION
+```
+
+The order of the rules is observable. An empty and invalid email reports
+`missing_email` because that requirement has higher priority.
+
+### 10. Define a state transition
+
+You specify:
+
+```text
+software AdvanceOrder
+
+input state as pending, paid, or shipped
+input event as payment_confirmed or shipment_confirmed
+output next_state as pending, paid, shipped, or rejected with reason
+
+when state is pending and event is payment_confirmed return paid
+when state is paid and event is shipment_confirmed return shipped
+otherwise reject invalid_transition
+```
+
+CPS shows:
+
+```text
+FUNCTION AdvanceOrder(state, event)
+    IF state = "pending" AND event = "payment_confirmed" THEN
+        RETURN "paid"
+    END IF
+
+    IF state = "paid" AND event = "shipment_confirmed" THEN
+        RETURN "shipped"
+    END IF
+
+    RETURN rejected("invalid_transition")
+END FUNCTION
+```
+
+### 11. Stop honestly at a declared bound
+
+You specify:
+
+```text
+software LocateMatchingRecord
+
+input records as a sequence of Record
+output result as Record, none, or unknown with reason
+
+inspect records in input order
+inspect at most 100 records
+return the first record where matches(record) is true
+return none only when every record was inspected and no record matched
+otherwise return unknown inspection_limit_reached
+```
+
+CPS shows:
+
+```text
+FUNCTION LocateMatchingRecord(records)
+    inspected <- 0
+
+    FOR EACH record IN records DO
+        IF inspected = 100 THEN
+            RETURN unknown("inspection_limit_reached")
+        END IF
+
+        inspected <- inspected + 1
+
+        IF matches(record) THEN
+            RETURN record
+        END IF
+    END FOR
+
+    RETURN none
+END FUNCTION
+```
+
+`none` and `unknown` mean different things. `none` says the complete bounded
+input was inspected. `unknown` says the system reached its limit before it
+could justify that conclusion.
+
+## What happens between the two text blocks?
+
+The synthesizer is allowed to propose. It is not allowed to approve its own
+work.
+
+```text
+                          PROPOSAL SIDE                 CHECKING SIDE
+
+  specification ---> parse ---> propose program ---> independent check
+                                                           |       |
+                                                     not accepted  accepted
+                                                           |       |
+                                                     explanation  render
+                                                                   |
+                                                                   v
+                                                              pseudocode
+```
+
+In the intended system:
+
+- the specification is converted into a structured, typed description;
+- a candidate program and its justification are proposed;
+- a separate checker reconstructs and validates the program structure;
+- every required premise and obligation must be available and accepted;
+- the renderer formats only the checked structure and adds no new meaning.
+
+This separation matters whether a proposal came from a fixed rule, a search
+procedure, a solver, a human, or an AI model. Origin is not proof.
+
+## Sometimes the correct demonstration is no pseudocode
+
+CPS is designed to explain why it cannot justify an output instead of filling
+gaps with a guess.
+
+```text
+AMBIGUOUS
+    Two valid programs remain because no tie-break rule was specified.
+
+UNSUPPORTED
+    The requested behavior is outside the controlled fragment.
+
+UNKNOWN
+    A required premise or proof obligation is missing.
+
+RESOURCE LIMIT
+    The next required observation lies beyond an explicit bound.
+```
+
+No non-accepting result is disguised as a successful program.
+
+## What makes the pseudocode useful?
+
+- **Readable:** the output exposes loops, branches, grouping, boundaries, and
+  return paths without target-language ceremony.
+- **Deterministic:** the same accepted program structure has one stable
+  presentation.
+- **Language-neutral:** the checked structure can be reviewed before anyone
+  chooses an implementation language.
+- **Content-preserving:** formatting cannot invent a condition, reorder an
+  operation, repair an omission, or choose between meanings.
+- **Non-executing:** the demonstration prints a program description; it does
+  not run user-supplied behavior.
+
+## The promise, in one picture
+
+```text
+  YOU CONTROL                 CPS MUST EXPLAIN              YOU REVIEW
+
+  inputs                      chosen structure              readable steps
+  outputs        -------->    assumptions        -------->  edge cases
+  rules                       obligations                   stop conditions
+  bounds                      acceptance result             exact grouping
+```
+
+A colleague reading the pseudocode should be able to answer:
+
+1. What goes in and what comes out?
+2. Which cases are accepted, rejected, or still unknown?
+3. In what order are values inspected and operations applied?
+4. What happens at empty inputs, ties, boundaries, and limits?
+5. Which details came from the specification rather than from a guess?
+
+That is the intended “wow”: not merely code-shaped text, but a visible bridge
+from a precise request to an inspectable program.
+
+## Current scope
+
+The repository currently develops small, bounded parts of this idea: controlled
+input, structured specifications, source-relative evidence, independent
+checking, and explicit outcomes. The gallery above is the product direction,
+not a claim that arbitrary natural language or every illustrated program is
+already supported.
+
+## Explore the design
 
 - [Architecture overview](docs/architecture/README.md)
-- [Safety and decision records](docs/decisions/README.md)
-- [Evaluation boundary](docs/evaluation/README.md)
+- [Design decisions](docs/decisions/README.md)
+- [Evaluation principles](docs/evaluation/README.md)
 - [Reference orientation](docs/reference/README.md)
-- [Immutable reference roles](references/README.md)
-- [Canonical source component matrix](src/README.md)
-- [Controlled-language contract](src/cnl/README.md)
-- [Intermediate-representation contract](src/ir/README.md)
-- [Verification contract](src/verification/README.md)
-- [Test layout](tests/README.md)
-- [Knowledge-area map](knowledge/README.md)
-- [Future benchmark area](benchmarks/README.md)
+- [Source component map](src/README.md)
+- [Controlled-language boundary](src/cnl/README.md)
+- [Verification boundary](src/verification/README.md)
+- [Test organization](tests/README.md)
 
 ## License
 
