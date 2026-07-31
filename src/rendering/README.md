@@ -4,12 +4,12 @@
 
 - PROJECT INTERPRETATION — This directory reserves deterministic,
   content-free rendering responsibilities for the bounded reduction slice
-  described by [`T006`](../../tasks/backlog/T006-reduction-vertical-slice.md).
+  described by [`T006`](../../tasks/ready/T006-reduction-vertical-slice.md).
 - SOURCE FACT — The directory contract is not a renderer.
 
 ## Owning task(s)
 
-- SOURCE FACT — [`T006 — Reduction vertical slice`](../../tasks/backlog/T006-reduction-vertical-slice.md)
+- SOURCE FACT — [`T006 — Reduction vertical slice`](../../tasks/ready/T006-reduction-vertical-slice.md)
   owns this component.
 
 ## Current state
@@ -58,7 +58,7 @@
 - PROJECT INTERPRETATION — The future T006 ExecPlan must name deterministic
   renderer, malformed-input, and content-freedom unit evidence plus the full
   accepted and rejected end-to-end integration evidence required by the
-  [`T006 backlog contract`](../../tasks/backlog/T006-reduction-vertical-slice.md);
+  [`T006 planning contract`](../../tasks/ready/T006-reduction-vertical-slice.md);
   the complete repository unit, integration, and canonical gates must pass.
 
 ## Handoff

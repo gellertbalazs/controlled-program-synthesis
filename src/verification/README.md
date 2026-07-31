@@ -5,7 +5,7 @@
 - SOURCE FACT — This directory implements the bounded, source-relative
   proof-record replay checker owned by
   [`T004`](../../tasks/done/T004-proof-kernel-skeleton.md).
-- PROJECT INTERPRETATION — [`T006`](../../tasks/backlog/T006-reduction-vertical-slice.md)
+- PROJECT INTERPRETATION — [`T006`](../../tasks/ready/T006-reduction-vertical-slice.md)
   may reuse this component only through a later owner-approved ExecPlan.
 - PROJECT INTERPRETATION — The checker is an independent acceptance boundary;
   it is not an inference engine or proof producer.
@@ -100,7 +100,7 @@
 - PROJECT INTERPRETATION — Independent V1 and, only if reached, V2 must inspect
   the complete matrix and task ledger and run every approved verification
   gate. Any T006 reuse must add only evidence named by its later plan and
-  [`T006 backlog contract`](../../tasks/backlog/T006-reduction-vertical-slice.md).
+  [`T006 planning contract`](../../tasks/ready/T006-reduction-vertical-slice.md).
 
 ## Handoff
 

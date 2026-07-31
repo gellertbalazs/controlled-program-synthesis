@@ -2,6 +2,9 @@
 
 :- use_module(library(process)).
 :- use_module(library(time)).
+:- use_module('../../src/cnl/cps_controlled_english_v0',
+              [ validate_controlled_english_v0/4
+              ]).
 
 repository_root(Root) :-
     source_file(repository_root(_), File),
@@ -329,6 +332,424 @@ proof_replay_process_inputs(Specification, Program, Authority) :-
             Contradictions,
             [provenance(Shared, Evidence)]).
 
+controlled_english_base_tokens(
+    [ specification, spec_main,
+      binds, spec_object,
+      as, element,
+      and, requires,
+      equality, represented_equal,
+      for, spec_object,
+      equals, value,
+      in, definition_space, adjacent_defined,
+      using, premise, adjacent_applications
+    ]).
+
+process_replace_nth1(1, [_Old|Tail], Value, [Value|Tail]) :-
+    !.
+process_replace_nth1(Index, [Head|Tail], Value, [Head|Replaced]) :-
+    Index > 1,
+    Next is Index - 1,
+    process_replace_nth1(Next, Tail, Value, Replaced).
+
+process_semantic_field_missing(Field0, Field) :-
+    compound_name_arguments(Field0, Name, Arguments0),
+    length(Arguments0, Length),
+    DispositionIndex is Length - 1,
+    process_replace_nth1(
+        DispositionIndex, Arguments0, missing, Arguments),
+    compound_name_arguments(Field, Name, Arguments).
+
+process_semantic_missing(Index, Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records0, Premises, Obligations,
+            Contradictions, Provenances)),
+    compound_name_arguments(Records0, semantic_records, Fields0),
+    nth1(Index, Fields0, Field0),
+    process_semantic_field_missing(Field0, Field),
+    process_replace_nth1(Index, Fields0, Field, Fields),
+    compound_name_arguments(Records, semantic_records, Fields),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, Provenances).
+
+process_evidence_with_unknown_law(
+    evidence(
+        at(Source, Pages, Raw),
+        claim(
+            Label, Topic,
+            facets(
+                Signature, Associativity, Definedness, _Law,
+                Termination, Cost, Effects, Aliasing, PageIdentity,
+                NegativeCases))),
+    evidence(
+        at(Source, Pages, Raw),
+        claim(
+            Label, Topic,
+            facets(
+                Signature, Associativity, Definedness,
+                unknown(law_requires_proof),
+                Termination, Cost, Effects, Aliasing, PageIdentity,
+                NegativeCases)))).
+
+process_t001_missing(Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, [provenance(Id, Evidence0)])),
+    process_evidence_with_unknown_law(Evidence0, Evidence),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, [provenance(Id, Evidence)]).
+
+process_lifecycle_missing(Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy,
+            claim(Id, Semantics, Uses, Requires, Conflicts, _Lifecycle),
+            Records, Premises, Obligations, Contradictions, Provenances)),
+    Authority =
+        authority_snapshot(
+            Policy,
+            claim(Id, Semantics, Uses, Requires, Conflicts, missing),
+            Records, Premises, Obligations, Contradictions, Provenances).
+
+process_premise_variant(ActivationValue, TrustValue, Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records,
+            [premise(Id, Activation0, Trust0, Provenance)],
+            Obligations, Contradictions, Provenances)),
+    (   ActivationValue == retained
+    ->  Activation = Activation0
+    ;   Activation = ActivationValue
+    ),
+    (   TrustValue == retained
+    ->  Trust = Trust0
+    ;   Trust = TrustValue
+    ),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records,
+            [premise(Id, Activation, Trust, Provenance)],
+            Obligations, Contradictions, Provenances).
+
+process_obligation_variant(ApplicabilityValue, DispositionValue,
+                           Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records, Premises,
+            [obligation(Id, LawId, Applicability0, Disposition0,
+                        Provenance)],
+            Contradictions, Provenances)),
+    (   ApplicabilityValue == retained
+    ->  Applicability = Applicability0
+    ;   Applicability = ApplicabilityValue
+    ),
+    (   DispositionValue == retained
+    ->  Disposition = Disposition0
+    ;   Disposition = DispositionValue
+    ),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises,
+            [obligation(Id, LawId, Applicability, Disposition,
+                        Provenance)],
+            Contradictions, Provenances).
+
+process_contradiction_unresolved(Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            [contradiction(Id, ClaimId, _Resolution, Provenance)],
+            Provenances)),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            [contradiction(Id, ClaimId, unresolved, Provenance)],
+            Provenances).
+
+process_unknown_authority(signature, Authority) :-
+    process_semantic_missing(1, Authority).
+process_unknown_authority(definedness, Authority) :-
+    process_semantic_missing(2, Authority).
+process_unknown_authority(law, Authority) :-
+    process_semantic_missing(3, Authority).
+process_unknown_authority(equality, Authority) :-
+    process_semantic_missing(4, Authority).
+process_unknown_authority(termination, Authority) :-
+    process_semantic_missing(5, Authority).
+process_unknown_authority(cost, Authority) :-
+    process_semantic_missing(6, Authority).
+process_unknown_authority(effects, Authority) :-
+    process_semantic_missing(7, Authority).
+process_unknown_authority(t001, Authority) :-
+    process_t001_missing(Authority).
+process_unknown_authority(lifecycle, Authority) :-
+    process_lifecycle_missing(Authority).
+process_unknown_authority(premise_activation, Authority) :-
+    process_premise_variant(missing, retained, Authority).
+process_unknown_authority(premise_trust, Authority) :-
+    process_premise_variant(retained, missing, Authority).
+process_unknown_authority(obligation_applicability, Authority) :-
+    process_obligation_variant(missing, missing, Authority).
+process_unknown_authority(obligation_disposition, Authority) :-
+    process_obligation_variant(retained, missing, Authority).
+process_unknown_authority(contradiction_resolution, Authority) :-
+    process_contradiction_unresolved(Authority).
+
+process_boundary_id(Prefix, Number, Id) :-
+    format(atom(Atom), '~w~d', [Prefix, Number]),
+    (   Prefix == p
+    ->  Id = premise_id(Atom)
+    ;   Prefix == o
+    ->  Id = obligation_id(Atom)
+    ;   Id = contradiction_id(Atom)
+    ).
+
+process_boundary_obligation(
+        LawId, SupplementalProvenances, CanonicalProvenance,
+        Number, Obligation) :-
+    process_boundary_id(o, Number, Id),
+    process_boundary_record_provenance(
+        Number, SupplementalProvenances, CanonicalProvenance,
+        RecordProvenance),
+    Obligation =
+        obligation(Id, LawId, missing, missing, RecordProvenance).
+
+process_boundary_contradiction(ClaimId, Provenance, Number,
+                               Contradiction) :-
+    process_boundary_id(c, Number, Id),
+    Contradiction = contradiction(Id, ClaimId, unresolved, Provenance).
+
+process_boundary_record_provenance(
+        Number, SupplementalProvenances, _CanonicalProvenance,
+        Provenance) :-
+    nth1(Number, SupplementalProvenances, Provenance),
+    !.
+process_boundary_record_provenance(
+        _Number, _SupplementalProvenances, CanonicalProvenance,
+        CanonicalProvenance).
+
+process_boundary_unknown_provenance(
+        Evidence0, Number, ProvenanceId,
+        provenance(ProvenanceId, Evidence)) :-
+    format(atom(Atom), 'boundary_provenance_~d', [Number]),
+    ProvenanceId = provenance_id(Atom),
+    process_evidence_with_unknown_law(Evidence0, Evidence).
+
+process_semantic_field_missing_with_provenance(
+        Field0, Provenance, Field) :-
+    compound_name_arguments(Field0, Name, Arguments0),
+    length(Arguments0, Length),
+    DispositionIndex is Length - 1,
+    process_replace_nth1(
+        DispositionIndex, Arguments0, missing, MissingArguments),
+    process_replace_nth1(
+        Length, MissingArguments, Provenance, Arguments),
+    compound_name_arguments(Field, Name, Arguments).
+
+process_semantics_provenance(Semantics0, Provenance, Semantics) :-
+    compound_name_arguments(Semantics0, semantics, Arguments0),
+    length(Arguments0, Length),
+    process_replace_nth1(
+        Length, Arguments0, provenance(Provenance), Arguments),
+    compound_name_arguments(Semantics, semantics, Arguments).
+
+process_missing_boundary(ProvenanceKind, Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            policy(PolicyId, PolicyKind, _PolicyProvenance),
+            claim(ClaimId, Semantics0, _Uses, _Requires, _Conflicts,
+                  _Lifecycle),
+            Records0,
+            [premise(PremiseId, _Activation, _Trust, _PremiseProvenance)],
+            _Obligations, _Contradictions,
+            [provenance(ProvenanceId, Evidence0)])),
+    numlist(1, 15, ProvenanceNumbers),
+    maplist(
+        process_boundary_unknown_provenance(Evidence0),
+        ProvenanceNumbers, SupplementalProvenanceIds,
+        SupplementalProvenanceRecords),
+    SupplementalProvenanceIds =
+        [ ClaimProvenance,
+          LifecycleProvenance,
+          PolicyProvenance,
+          SignatureProvenance,
+          DefinitionProvenance,
+          LawProvenance,
+          EqualityProvenance,
+          TerminationProvenance,
+          CostProvenance,
+          EffectsProvenance,
+          PremiseProvenance,
+          ObligationProvenance1,
+          ObligationProvenance2,
+          ObligationProvenance3,
+          ObligationProvenance4
+        ],
+    Policy = policy(PolicyId, PolicyKind, PolicyProvenance),
+    process_semantics_provenance(
+        Semantics0, ClaimProvenance, Semantics),
+    compound_name_arguments(Records0, semantic_records, Fields0),
+    maplist(
+        process_semantic_field_missing_with_provenance,
+        Fields0,
+        [ SignatureProvenance,
+          DefinitionProvenance,
+          LawProvenance,
+          EqualityProvenance,
+          TerminationProvenance,
+          CostProvenance,
+          EffectsProvenance
+        ],
+        Fields),
+    compound_name_arguments(Records, semantic_records, Fields),
+    numlist(1, 8, Numbers),
+    maplist(process_boundary_id(o), Numbers, ObligationIds),
+    maplist(process_boundary_id(c), Numbers, ContradictionIds),
+    Claim =
+        claim(
+            ClaimId, Semantics, uses([PremiseId]),
+            requires(ObligationIds), conflicts(ContradictionIds),
+            current(LifecycleProvenance)),
+    Premises = [
+        premise(PremiseId, missing, missing, PremiseProvenance)
+    ],
+    Fields = [_Signature, _Definition,
+              law(LawId, _, _, _, _, _, _)|_],
+    SupplementalObligationProvenances = [
+        ObligationProvenance1,
+        ObligationProvenance2,
+        ObligationProvenance3,
+        ObligationProvenance4
+    ],
+    maplist(
+        process_boundary_obligation(
+            LawId, SupplementalObligationProvenances, ProvenanceId),
+        Numbers, Obligations),
+    maplist(
+        process_boundary_contradiction(ClaimId, ProvenanceId),
+        Numbers, Contradictions),
+    (   ProvenanceKind == accepted
+    ->  Evidence = Evidence0
+    ;   process_evidence_with_unknown_law(Evidence0, Evidence)
+    ),
+    append(
+        SupplementalProvenanceRecords,
+        [provenance(ProvenanceId, Evidence)],
+        Provenances),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, Provenances).
+
+process_duplicate_provenance(Authority) :-
+    proof_replay_process_inputs(
+        _Specification, _Program,
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, [Provenance])),
+    Authority =
+        authority_snapshot(
+            Policy, Claim, Records, Premises, Obligations,
+            Contradictions, [Provenance, Provenance]).
+
+controlled_english_process_case(accepted, accepted,
+                                Tokens, Program, Authority) :-
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(_Specification, Program, Authority).
+controlled_english_process_case(rejected_obligation, rejected,
+                                Tokens, Program, Authority) :-
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(
+        _Specification, Program, _CanonicalAuthority),
+    process_obligation_variant(
+        retained, rejected(provenance_id(eop_concepts_p9)), Authority).
+controlled_english_process_case(Name, unknown,
+                                Tokens, Program, Authority) :-
+    process_unknown_authority(Name, Authority),
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(
+        _Specification, Program, _CanonicalAuthority).
+controlled_english_process_case(
+        maximum_unknown, unknown, Tokens, Program, Authority) :-
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(
+        _Specification, Program, _CanonicalAuthority),
+    process_missing_boundary(accepted, Authority).
+controlled_english_process_case(
+        maximum_plus_one_resource, resource_exhausted,
+        Tokens, Program, Authority) :-
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(
+        _Specification, Program, _CanonicalAuthority),
+    process_missing_boundary(unknown, Authority).
+controlled_english_process_case(
+        duplicate_provenance, rejected, Tokens, Program, Authority) :-
+    controlled_english_base_tokens(Tokens),
+    proof_replay_process_inputs(
+        _Specification, Program, _CanonicalAuthority),
+    process_duplicate_provenance(Authority).
+controlled_english_process_case(ambiguous, ambiguous,
+                                Tokens, Program, Authority) :-
+    Tokens =
+        [ specification, spec_main,
+          binds, spec_object,
+          as, element,
+          and, requires,
+          equality, represented_equal,
+          for, spec_object,
+          equals, alpha, or, beta,
+          in, definition_space, adjacent_defined,
+          using, premise, adjacent_applications
+        ],
+    proof_replay_process_inputs(_Specification, Program, Authority).
+
+controlled_english_process_goal(Name, Category, Goal, ExpectedOutput) :-
+    controlled_english_process_case(
+        Name, Category, Tokens, Program, Authority),
+    findall(
+        Result,
+        validate_controlled_english_v0(
+            Tokens, Program, Authority, Result),
+        ParentResults),
+    ParentResults = [Expected],
+    ground(Expected),
+    acyclic_term(Expected),
+    canonical_term_string(Tokens, TokensString),
+    canonical_term_string(Program, ProgramString),
+    canonical_term_string(Authority, AuthorityString),
+    canonical_term_string(Expected, ExpectedString),
+    format(
+        string(Goal),
+        "use_module('src/cnl/cps_controlled_english_v0.pl'),Tokens=~s,Program=~s,Authority=~s,Expected=~s,copy_term(Tokens-Program-Authority,Before),findall(Result,cps_controlled_english_v0:validate_controlled_english_v0(Tokens,Program,Authority,Result),Results),Results=[Only],ground(Only),acyclic_term(Only),Tokens-Program-Authority==Before,Only==Expected,Only=controlled_english_validation(Status,controlled_english_audit(_Preflight,_Parse,Candidates)),is_list(Candidates),functor(Status,~w,1),write_canonical(Only),nl,halt",
+        [ TokensString,
+          ProgramString,
+          AuthorityString,
+          ExpectedString,
+          Category
+        ]),
+    format(string(ExpectedOutput), '~s~n', [ExpectedString]).
+
+test(fresh_process_controlled_english_v0_boundary) :-
+    forall(
+        controlled_english_process_case(
+            Name, Category, _Tokens, _Program, _Authority),
+        ( controlled_english_process_goal(
+              Name, Category, Goal, ExpectedOutput),
+          run_goal(Goal, ExpectedOutput, exit(0))
+        )).
+
 proof_replay_process_proof(accepted, Proof) :-
     ProcessConclusion =
         source_relative_identity_replay(
@@ -433,6 +854,183 @@ test(fresh_process_proof_replay_statuses_are_explicit_and_bounded) :-
               resource_exhausted
             ]),
         ( proof_replay_process_goal(Category, Goal),
+          format(string(Expected), '~w~n', [Category]),
+          run_goal(Goal, Expected, exit(0))
+        )).
+
+fixed_left_process_tokens(
+    [ specification, reduce_spec,
+      program, reduce_program,
+      reduces, sequence, alpha, then, beta, then, gamma,
+      as, item,
+      from, left,
+      using, operation, combine,
+      in, definition_space, combine_space,
+      using, premise, combine_premise
+    ]).
+
+fixed_left_process_evidence(
+    evidence(
+        at(
+            source(
+                'eop_concepts.pdf',
+                'references/eop_concepts.pdf',
+                243726,
+                '401346f1e3d75b790cf0229dab174773a4eb854880e6e7c05f6cc924a4afac19'),
+            pages(9, 9, 9, 9),
+            raw_utf8([112, 97, 114, 116, 105, 97, 108])),
+        claim(
+            source_fact,
+            eop_semantics,
+            facets(
+                established(binary_operation),
+                established(partial_associativity),
+                established(adjacent_definedness),
+                established(partial_associativity_law),
+                established(well_founded_measure),
+                established(operation_count),
+                established(effect_conditions),
+                established(alias_conditions),
+                established(physical_and_printed_page),
+                established(negative_cases))))).
+
+fixed_left_process_authority(Activation, PolicyId, Authority) :-
+    Provenance = provenance_id(eop_concepts_p9),
+    fixed_left_process_evidence(Evidence),
+    Authority =
+        authority_snapshot(
+            policy(PolicyId, source_relative_law_v1, Provenance),
+            claim(
+                claim_id(combine_fixed_left),
+                semantics(
+                    signature(signature_id(item)),
+                    definedness(definition_space_id(combine_space)),
+                    law(
+                        law_id(combine_fixed_left),
+                        equality(equality_id(structural))),
+                    termination(termination_id(remaining_values)),
+                    cost(cost_id(n_minus_one)),
+                    effects(effects_id(pure_fresh)),
+                    provenance(Provenance)),
+                uses([premise_id(combine_premise)]),
+                requires([obligation_id(each_application_defined)]),
+                conflicts([contradiction_id(no_undefined_application)]),
+                current(Provenance)),
+            semantic_records(
+                signature(
+                    signature_id(item),
+                    descriptor(binary_same_type_combine),
+                    accepted(Provenance), Provenance),
+                definition_space(
+                    definition_space_id(combine_space),
+                    signature_id(item),
+                    descriptor(one_to_three_ground_values),
+                    accepted(Provenance), Provenance),
+                law(
+                    law_id(combine_fixed_left),
+                    signature_id(item),
+                    definition_space_id(combine_space),
+                    equality_id(structural),
+                    descriptor(fixed_left_construction),
+                    accepted(Provenance), Provenance),
+                equality_relation(
+                    equality_id(structural),
+                    signature_id(item),
+                    definition_space_id(combine_space),
+                    relation(structural_term_identity),
+                    accepted(Provenance), Provenance),
+                termination(
+                    termination_id(remaining_values),
+                    law_id(combine_fixed_left),
+                    measure(remaining_values),
+                    accepted(Provenance), Provenance),
+                cost(
+                    cost_id(n_minus_one),
+                    law_id(combine_fixed_left),
+                    operation_count(n_minus_one),
+                    accepted(Provenance), Provenance),
+                effects(
+                    effects_id(pure_fresh),
+                    law_id(combine_fixed_left),
+                    conditions(pure_fresh_construction),
+                    accepted(Provenance), Provenance)),
+            [ premise(
+                  premise_id(combine_premise),
+                  Activation,
+                  trusted(policy_id(source_policy), Provenance),
+                  Provenance)
+            ],
+            [ obligation(
+                  obligation_id(each_application_defined),
+                  law_id(combine_fixed_left),
+                  applicable(Provenance),
+                  accepted(Provenance),
+                  Provenance)
+            ],
+            [ contradiction(
+                  contradiction_id(no_undefined_application),
+                  claim_id(combine_fixed_left),
+                  cleared(Provenance),
+                  Provenance)
+            ],
+            [provenance(Provenance, Evidence)]).
+
+fixed_left_process_case(accepted, Tokens, Authority, proposed) :-
+    fixed_left_process_tokens(Tokens),
+    Provenance = provenance_id(eop_concepts_p9),
+    fixed_left_process_authority(
+        active(Provenance), policy_id(source_policy), Authority).
+fixed_left_process_case(rejected, Tokens, Authority, proposed) :-
+    fixed_left_process_tokens(Tokens),
+    Provenance = provenance_id(eop_concepts_p9),
+    fixed_left_process_authority(
+        inactive(Provenance), policy_id(source_policy), Authority).
+fixed_left_process_case(unknown, Tokens, Authority, proposed) :-
+    fixed_left_process_tokens(Tokens),
+    fixed_left_process_authority(
+        missing, policy_id(source_policy), Authority).
+fixed_left_process_case(resource_exhausted, Tokens, Authority, proposed) :-
+    fixed_left_process_tokens(Tokens),
+    atom_concat(
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+        LongPolicyId),
+    Provenance = provenance_id(eop_concepts_p9),
+    fixed_left_process_authority(
+        active(Provenance), policy_id(LongPolicyId), Authority).
+fixed_left_process_case(
+    unsupported,
+    [ specification, reduce_spec,
+      program, reduce_program,
+      reduces, sequence, alpha, then, beta, then, gamma,
+      as, item,
+      from, left,
+      using, operation, add,
+      in, definition_space, combine_space,
+      using, premise, combine_premise
+    ],
+    not_used,
+    not_used).
+
+fixed_left_process_goal(Category, Tokens, Authority, proposed, Goal) :-
+    canonical_term_string(Tokens, TokensString),
+    canonical_term_string(Authority, AuthorityString),
+    format(
+        string(Goal),
+        "use_module('src/cps_fixed_left_reduction_v0.pl'),Tokens=~s,Authority=~s,cps_fixed_left_reduction_v0:propose_fixed_left_reduction_v0(Tokens,reduction_proposal_result(proposed(Candidate),_)),findall(Result,cps_fixed_left_reduction_v0:verify_fixed_left_reduction_v0(Tokens,Candidate,Authority,Result),Results),Results=[reduction_validation(Status,_)],ground(Status),acyclic_term(Status),functor(Status,~w,1),write(~w),nl,halt",
+        [TokensString, AuthorityString, Category, Category]).
+fixed_left_process_goal(Category, Tokens, _Authority, not_used, Goal) :-
+    canonical_term_string(Tokens, TokensString),
+    format(
+        string(Goal),
+        "use_module('src/cps_fixed_left_reduction_v0.pl'),Tokens=~s,findall(Result,cps_fixed_left_reduction_v0:verify_fixed_left_reduction_v0(Tokens,not_used,not_used,Result),Results),Results=[reduction_validation(Status,_)],ground(Status),acyclic_term(Status),functor(Status,~w,1),write(~w),nl,halt",
+        [TokensString, Category, Category]).
+
+test(fresh_process_fixed_left_reduction_v0_boundary) :-
+    forall(
+        fixed_left_process_case(Category, Tokens, Authority, CandidateMode),
+        ( fixed_left_process_goal(
+              Category, Tokens, Authority, CandidateMode, Goal),
           format(string(Expected), '~w~n', [Category]),
           run_goal(Goal, Expected, exit(0))
         )).
