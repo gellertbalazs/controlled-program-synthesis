@@ -6,7 +6,8 @@
   proof-record replay checker owned by
   [`T004`](../../tasks/done/T004-proof-kernel-skeleton.md).
 - PROJECT INTERPRETATION — [`T006`](../../tasks/ready/T006-reduction-vertical-slice.md)
-  may reuse this component only through a later owner-approved ExecPlan.
+  uses a separate private reduction checker in the root T006 module and does
+  not reuse or extend this identity checker.
 - PROJECT INTERPRETATION — The checker is an independent acceptance boundary;
   it is not an inference engine or proof producer.
 
@@ -14,8 +15,8 @@
 
 - SOURCE FACT — [`T004 — Proof-kernel skeleton`](../../tasks/done/T004-proof-kernel-skeleton.md)
   is the primary owner.
-- PROJECT INTERPRETATION — T006 is a later reuse owner only for scope
-  explicitly approved by its own ExecPlan.
+- PROJECT INTERPRETATION — T006 owns no predicate or behavior in this
+  directory.
 
 ## Current state
 
@@ -23,8 +24,8 @@
 - PROJECT INTERPRETATION — This contract does not declare T004 accepted.
   Current progress, counters, eligibility, and verdict are authoritative only
   in the [`T004 task record`](../../tasks/done/T004-proof-kernel-skeleton.md).
-- PROJECT INTERPRETATION — No T006 reuse is implemented or authorized by
-  T004.
+- PROJECT INTERPRETATION — T006's approved reduction replay remains distinct
+  from T004 identity replay and imports no T004 code.
 
 ## Approved plans
 
@@ -33,8 +34,10 @@
   [`fixture amendment`](../../docs/plans/T004-source-relative-identity-proof-replay-fixture-amendment-plan.md),
   and
   [`publication amendment`](../../docs/plans/T004-source-relative-identity-proof-replay-publication-amendment-plan.md).
-- PROJECT INTERPRETATION — Any T006 reuse requires its own separately reviewed
-  and explicitly approved plan.
+- SOURCE FACT — T006 is governed separately by its
+  [`original plan`](../../docs/plans/T006-fixed-left-reduction-vertical-slice-plan.md)
+  and
+  [`focused-exhaustion amendment`](../../docs/plans/T006-fixed-left-reduction-vertical-slice-amended-plan.md).
 
 ## Inputs and outputs
 
@@ -79,7 +82,7 @@
   dynamic assertion, filesystem/network authority, or backend trust.
 - PROJECT INTERPRETATION — It proves no equality truth, Specification
   satisfaction, Program correctness, completeness, cost, effects,
-  termination, or T006 reuse.
+  termination, or T006 reduction conclusion.
 - PROJECT INTERPRETATION — `src/verify` is not a coexisting component or
   alias, and `src/proof` does not bypass the inference/verification split.
 
@@ -88,8 +91,8 @@
 - SOURCE FACT — T004 entered delivery only after T002 and T003 acceptance and
   exact owner approval of its digest-bound plans.
 - SOURCE FACT — T006 requires T002–T005 to be accepted.
-- PROJECT INTERPRETATION — Any behavior or T006 reuse outside the frozen T004
-  boundary requires a separately reviewed and explicitly approved plan.
+- PROJECT INTERPRETATION — T006's separately approved root module leaves the
+  frozen T004 boundary and every T004 byte unchanged.
 
 ## Required unit and integration evidence
 
@@ -99,12 +102,12 @@
   immutability, clean-process/status, and exclusion outcomes.
 - PROJECT INTERPRETATION — Independent V1 and, only if reached, V2 must inspect
   the complete matrix and task ledger and run every approved verification
-  gate. Any T006 reuse must add only evidence named by its later plan and
-  [`T006 planning contract`](../../tasks/ready/T006-reduction-vertical-slice.md).
+  gate. T006 reduction evidence is governed only by its own approved plans and
+  [`T006 task`](../../tasks/ready/T006-reduction-vertical-slice.md).
 
 ## Handoff
 
 - PROJECT INTERPRETATION — This contract, the
   [canonical component matrix](../README.md), the inference contract, and
-  control records must remain synchronized. T006 reuse and T005+ work do not
-  activate automatically.
+  control records must remain synchronized. T006 does not alter this component
+  or activate any successor automatically.

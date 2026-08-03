@@ -1600,7 +1600,7 @@ test(rejection_priority_is_resource_then_authority_then_spec_program_proof) :-
         Tokens, AllWrong, ResourceAuthority,
         resource_exhausted(
             predecessor(t002, resource_limit_exceeded)), _),
-    scope_authority_variant(signature_id, ScopeAuthority),
+    once(scope_authority_variant(signature_id, ScopeAuthority)),
     validation_status(
         Tokens, AllWrong, ScopeAuthority,
         rejected(authority_scope_mismatch(signature_id)), _),
@@ -1752,13 +1752,78 @@ test(repeated_call_order_directory_and_unrelated_state_do_not_change_results) :-
         retractall(ambient_marker(_))),
     assertion(Third == First).
 
+export_inventory_matches(Actual, Expected) :-
+    nonvar(Actual),
+    Actual = [ActualFirst|ActualTail],
+    nonvar(ActualTail),
+    ActualTail = [ActualSecond|ActualEnd],
+    ActualEnd == [],
+    ground(ActualFirst),
+    ground(ActualSecond),
+    nonvar(Expected),
+    Expected = [ExpectedFirst|ExpectedTail],
+    nonvar(ExpectedTail),
+    ExpectedTail = [ExpectedSecond|ExpectedEnd],
+    ExpectedEnd == [],
+    ground(ExpectedFirst),
+    ground(ExpectedSecond),
+    msort(Actual, SortedActual),
+    msort(Expected, SortedExpected),
+    SortedActual == SortedExpected.
+
+test(export_inventory_comparison_is_order_independent_and_exact) :-
+    Expected =
+        [ propose_fixed_left_reduction_v0/2,
+          verify_fixed_left_reduction_v0/4
+        ],
+    Reversed =
+        [ verify_fixed_left_reduction_v0/4,
+          propose_fixed_left_reduction_v0/2
+        ],
+    assertion(export_inventory_matches(Expected, Expected)),
+    assertion(export_inventory_matches(Reversed, Expected)),
+    Improper =
+        [ propose_fixed_left_reduction_v0/2
+        | verify_fixed_left_reduction_v0/4
+        ],
+    Cyclic = [propose_fixed_left_reduction_v0/2|Cyclic],
+    Rejected =
+        [ [],
+          [propose_fixed_left_reduction_v0/2],
+          [ propose_fixed_left_reduction_v0/2,
+            verify_fixed_left_reduction_v0/4,
+            extra_export/0
+          ],
+          [ propose_fixed_left_reduction_v0/2,
+            verify_fixed_left_reduction_v0/4,
+            extra_export/0,
+            farther_export/1
+          ],
+          [ propose_fixed_left_reduction_v0/2,
+            propose_fixed_left_reduction_v0/2
+          ],
+          [ wrong_export_name/2,
+            verify_fixed_left_reduction_v0/4
+          ],
+          [ propose_fixed_left_reduction_v0/3,
+            verify_fixed_left_reduction_v0/4
+          ],
+          malformed_inventory,
+          [propose_fixed_left_reduction_v0/2, _],
+          Improper,
+          Cyclic
+        ],
+    forall(
+        member(Inventory, Rejected),
+        assertion(\+ export_inventory_matches(Inventory, Expected))).
+
 test(module_exports_only_the_two_approved_predicates) :-
     module_property(cps_fixed_left_reduction_v0, exports(Exports)),
-    assertion(
-        Exports ==
-            [ propose_fixed_left_reduction_v0/2,
-              verify_fixed_left_reduction_v0/4
-            ]).
+    Expected =
+        [ propose_fixed_left_reduction_v0/2,
+          verify_fixed_left_reduction_v0/4
+        ],
+    assertion(export_inventory_matches(Exports, Expected)).
 
 test(source_has_only_t002_dependency_and_no_execution_mutation_or_backend) :-
     source_file(

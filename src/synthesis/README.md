@@ -2,10 +2,12 @@
 
 ## Purpose
 
-- PROJECT INTERPRETATION — This directory reserves proposal-generation
+- PROJECT INTERPRETATION — This directory documents proposal-generation
   responsibilities for the bounded reduction slice described by
   [`T006`](../../tasks/ready/T006-reduction-vertical-slice.md).
-- SOURCE FACT — The directory contract is not a synthesizer.
+- SOURCE FACT — The implementation is the root
+  [`cps_fixed_left_reduction_v0.pl`](../cps_fixed_left_reduction_v0.pl)
+  candidate; this directory contains no synthesizer module.
 
 ## Owning task(s)
 
@@ -14,19 +16,24 @@
 
 ## Current state
 
-- PROJECT INTERPRETATION — **PENDING**. No T006 synthesis behavior is
-  implemented.
+- PROJECT INTERPRETATION — **IMPLEMENTED I1 candidate in the root module;
+  authoritative progress and verdict remain in the T006 task record**.
 
 ## Approved plan
 
-- SOURCE FACT — **no approved ExecPlan yet**. A future task-specific T006
-  ExecPlan is the required implementation authority.
+- SOURCE FACT — The owner-approved authority is the exact
+  [`focused-exhaustion amended plan`](../../docs/plans/T006-fixed-left-reduction-vertical-slice-amended-plan.md)
+  at SHA-256
+  `81e36851686ab1b6e20f38e38ba2cad0a0e49b484b3c2e11dae7fee82c763d86`,
+  incorporating the
+  [original plan](../../docs/plans/T006-fixed-left-reduction-vertical-slice-plan.md).
 
 ## Inputs and outputs
 
-- HYPOTHESIS — UNKNOWN. Proposal inputs, candidate representations,
-  algorithms, predicate names, backend interfaces, and resource envelopes
-  remain unapproved until the T006 ExecPlan.
+- SOURCE FACT — The sole proposal API is
+  `propose_fixed_left_reduction_v0(+Tokens,-ProposalResult)`. It returns one
+  bounded deterministic template proposal or an explicit rejected,
+  unsupported, or resource-exhausted status and audit.
 
 ## Trust boundary
 
@@ -36,34 +43,33 @@
 
 ## Allowed responsibilities
 
-- PROJECT INTERPRETATION — After plan approval, this component may own only
-  the proposal-generation responsibilities expressly assigned by the bounded
-  T006 slice.
+- PROJECT INTERPRETATION — The root candidate owns only fixed grammar
+  preflight and one deterministic left-nested proposal. It has no acceptance,
+  proof, execution, or backend authority.
 
 ## Explicit non-goals
 
-- SOURCE FACT — No synthesizer, solver, equality-saturation backend, proof
-  authority, optional dependency, process boundary, or persistence mechanism
-  is authorized now.
+- SOURCE FACT — No search, solver, equality-saturation backend, proof
+  authority, optional dependency, process boundary, persistence mechanism,
+  or alternate proposal is authorized.
 - PROJECT INTERPRETATION — `src/synth` is not a coexisting component or alias,
-  and `src/patterns` is not a product boundary before an approved T006 plan.
+  and `src/patterns` is outside the approved T006 product boundary.
 
 ## Entry criteria
 
 - SOURCE FACT — T006 requires T002–T005 to be accepted.
-- PROJECT INTERPRETATION — Owner approval of a task-specific T006 ExecPlan is
-  required before product or test changes.
+- SOURCE FACT — T002–T005 and both exact T006 plan digests were authenticated
+  before the current I1 claim.
 
 ## Required unit and integration evidence
 
-- PROJECT INTERPRETATION — The future T006 ExecPlan must name proposal,
-  law/definedness, resource, rejection, and missing-law unit evidence plus the
-  accepted and source-relative-failure integration evidence required by the
-  [`T006 planning contract`](../../tasks/ready/T006-reduction-vertical-slice.md);
-  the complete repository unit, integration, and canonical gates must pass.
+- PROJECT INTERPRETATION — The approved matrix covers all proposal fields,
+  bounds, malformed and unsupported inputs, determinism, immutability, trust
+  exclusions, and accepted/non-accepted clean-process propagation. Exact I1
+  and verification evidence remains in the T006 task.
 
 ## Handoff
 
-- PROJECT INTERPRETATION — A completed T006 synthesis slice must synchronize
+- PROJECT INTERPRETATION — A completed T006 I1 must synchronize
   this contract with the [canonical component matrix](../README.md), rendering
   and verification contracts, and control records, then stop before T007.

@@ -8,6 +8,9 @@
 - SOURCE FACT — [`cps_controlled_english_v0.pl`](cps_controlled_english_v0.pl)
   parses one fixed pre-tokenized equality fragment into fresh T003
   Specification proposals.
+- PROJECT INTERPRETATION — T006's distinct reduction-token grammar is private
+  to the root `cps_fixed_left_reduction_v0.pl` candidate. It neither imports,
+  extends, nor relabels this T005 equality component.
 
 ## Owning task(s)
 
@@ -64,6 +67,8 @@
 - SOURCE FACT — Tokenization, broad English, legacy compiler execution,
   inference, proof, synthesis, Program execution, persistence, network
   access, and rendering are outside T005.
+- PROJECT INTERPRETATION — T006 reduction syntax, proposal generation,
+  reduction replay, and rendering remain outside this directory's public API.
 - PROJECT INTERPRETATION — `src/ce` is not a coexisting component or alias.
 
 ## Entry criteria
@@ -80,6 +85,6 @@
 
 ## Handoff
 
-- PROJECT INTERPRETATION — A completed T005 slice must synchronize this
-  contract with the [canonical component matrix](../README.md) and control
-  records, preserve explicit failure outcomes, and stop before T006.
+- PROJECT INTERPRETATION — T005 synchronized this contract and stopped before
+  T006. The separately approved T006 root boundary preserves every T005 byte,
+  public API, result status, and trust obligation unchanged.
